@@ -37,7 +37,7 @@ class DeploymentController(
     fun startDeployment(@RequestBody deployment : DeploymentDTO, request : HttpServletRequest) : ResponseEntity<String> {
         logger.debug("Running deployment stage one for application id {}", deployment.applicationId)
         val deploymentId = deploymentService.submitDeployment(deployment)
-        val statusUrl = generateServerUrl(request, "/deployment/" + deploymentId)
+        val statusUrl = generateServerUrl(request, "/v1/deployments/" + deploymentId)
 
         return ResponseEntity.accepted().header(BackstageConstants.DEPLOYMENT_STATUS_HEADER, statusUrl).build()
     }

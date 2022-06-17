@@ -15,8 +15,8 @@ import com.fasterxml.jackson.annotation.JsonInclude
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 data class BasicResourceDTO(
-    var source : String?,
-    var target: String?,
-    var sha256 : String?,
-    var size : Long?
+    var source : String? = null,
+    var target: String? = null,
+    var sha256 : String? = null,
+    var size : Long? = null
 )
