@@ -29,6 +29,7 @@ import co.bitshifted.backstage.util.logger
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import java.io.InputStream
 
 @Service("deploymentServiceImpl")
 class DeploymentServiceImpl(
@@ -51,6 +52,13 @@ class DeploymentServiceImpl(
         deploymentExecutorService.submit(deploymentProcessTask)
         logger.info("Deployment ID {} submitted for processing ", out.id)
         return out.id
+    }
+
+    override fun submitDeploymentArchive(deploymentId: String, ins: InputStream): String? {
+        val deployment = deploymentRepository.findById(deploymentId).orElseThrow { BackstageException(ErrorInfo.DEPLOYMENT_NOT_FOND, deploymentId) }
+
+        val taskConfig = deploymentMapper().dtoToDeploymentTaskConfig(deploymentDto, out.id ?: "", DeploymentStage.STAGE_ONE)
+        return "dummy"
     }
 
     override fun getDeployment(deploymentId: String): DeploymentStatusDTO {

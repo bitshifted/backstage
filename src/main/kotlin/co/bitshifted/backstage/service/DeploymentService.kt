@@ -13,10 +13,13 @@ package co.bitshifted.backstage.service
 import co.bitshifted.backstage.dto.DeploymentDTO
 import co.bitshifted.backstage.dto.DeploymentStatusDTO
 import co.bitshifted.backstage.dto.RequiredResourcesDTO
+import java.io.InputStream
 
 interface DeploymentService {
 
     fun submitDeployment(deploymentDto: DeploymentDTO) : String?
+
+    fun submitDeploymentArchive(deploymentId: String, ins : InputStream) : String?
 
     fun getDeployment(deploymentId : String) : DeploymentStatusDTO
 }

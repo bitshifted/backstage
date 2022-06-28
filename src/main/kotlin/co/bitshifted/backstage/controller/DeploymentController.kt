@@ -17,10 +17,12 @@ import co.bitshifted.backstage.service.DeploymentService
 import co.bitshifted.backstage.util.generateServerUrl
 import co.bitshifted.backstage.util.logger
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
@@ -46,5 +48,11 @@ class DeploymentController(
     fun getDeployment(@PathVariable deploymentId : String) : ResponseEntity<DeploymentStatusDTO> {
         val deployment = deploymentService.getDeployment(deploymentId)
         return ResponseEntity.ok(deployment)
+    }
+
+    @PutMapping(value = ["/{deploymentId}"], consumes = ["application/zip"])
+    fun acceptDeploymentArchive(@PathVariable deploymentId: String, @RequestBody content : ByteArray) : ResponseEntity<String> {
+        logger.debug("Accepted deployment archive for {}", deploymentId)
+        return ResponseEntity.accepted().header(BackstageConstants.DEPLOYMENT_STATUS_HEADER, "some status").build()
     }
 }
