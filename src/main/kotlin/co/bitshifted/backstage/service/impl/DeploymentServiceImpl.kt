@@ -16,10 +16,9 @@ import co.bitshifted.backstage.dto.RequiredResourcesDTO
 import co.bitshifted.backstage.entity.Deployment
 import co.bitshifted.backstage.exception.BackstageException
 import co.bitshifted.backstage.exception.ErrorInfo
-import co.bitshifted.backstage.mappers.deploymentMapper
-import co.bitshifted.backstage.model.DeploymentTaskConfig
 import co.bitshifted.backstage.model.DeploymentStage
 import co.bitshifted.backstage.model.DeploymentStatus
+import co.bitshifted.backstage.model.DeploymentTaskConfig
 import co.bitshifted.backstage.repository.ApplicationRepository
 import co.bitshifted.backstage.repository.DeploymentRepository
 import co.bitshifted.backstage.service.DeploymentService
@@ -29,7 +28,11 @@ import co.bitshifted.backstage.util.logger
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import java.io.FileOutputStream
 import java.io.InputStream
+import java.nio.file.Files
+import java.util.zip.ZipInputStream
+
 
 @Service("deploymentServiceImpl")
 class DeploymentServiceImpl(
@@ -47,7 +50,7 @@ class DeploymentServiceImpl(
         val out = deploymentRepository.save(deployment)
         logger.info("Accepted deployment request with id {}", out.id)
 
-        val taskConfig = deploymentMapper().dtoToDeploymentTaskConfig(deploymentDto, out.id ?: "", DeploymentStage.STAGE_ONE)
+        val taskConfig = DeploymentTaskConfig(out.id ?: throw BackstageException(ErrorInfo.DEPLOYMENT_NOT_FOND), DeploymentStage.STAGE_ONE, deploymentDto)
         val deploymentProcessTask = deploymentTaskFactory.apply(taskConfig)
         deploymentExecutorService.submit(deploymentProcessTask)
         logger.info("Deployment ID {} submitted for processing ", out.id)
@@ -55,10 +58,33 @@ class DeploymentServiceImpl(
     }
 
     override fun submitDeploymentArchive(deploymentId: String, ins: InputStream): String? {
-        val deployment = deploymentRepository.findById(deploymentId).orElseThrow { BackstageException(ErrorInfo.DEPLOYMENT_NOT_FOND, deploymentId) }
+        // unpack deployment archive to temporary directory
+        val tempDir = Files.createTempDirectory("backstage-" + deploymentId)
+        logger.debug("Created temporary directory {}", tempDir.toFile().absolutePath)
+        var buff = ByteArray(4096)
+        ZipInputStream(ins).use {
+            var entry = it.nextEntry
+            while (entry != null) {
+                val entryPath = tempDir.resolve(entry.name)
+                logger.debug("Entry target path: {}", entryPath)
+                Files.createDirectories(entryPath.parent)
 
-        val taskConfig = deploymentMapper().dtoToDeploymentTaskConfig(deploymentDto, out.id ?: "", DeploymentStage.STAGE_ONE)
-        return "dummy"
+                val fos = FileOutputStream(entryPath.toFile())
+                var len: Int
+                while (it.read(buff).also { len = it } > 0) {
+                    fos.write(buff, 0, len)
+                }
+                fos.close()
+                entry = it.nextEntry
+            }
+        }
+        val deploymentFile = tempDir.resolve("deployment.json")
+        val deploymentDto = objectMapper.readValue(deploymentFile.toFile(), DeploymentDTO::class.java)
+        val taskConfig = DeploymentTaskConfig(deploymentId, DeploymentStage.STAGE_TWO, deploymentDto, tempDir)
+        val deploymentProcessTask = deploymentTaskFactory.apply(taskConfig)
+        deploymentExecutorService.submit(deploymentProcessTask)
+        logger.info("Deployment ID {} submitted for processing ", deploymentId)
+        return deploymentId
     }
 
     override fun getDeployment(deploymentId: String): DeploymentStatusDTO {

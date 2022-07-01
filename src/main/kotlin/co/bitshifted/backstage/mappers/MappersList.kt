@@ -14,4 +14,3 @@ import org.mapstruct.factory.Mappers
 
 fun applicationMapper() : ApplicationMapper = Mappers.getMapper(ApplicationMapper::class.java)
 
-fun deploymentMapper() : DeploymentMapper = Mappers.getMapper(DeploymentMapper::class.java)

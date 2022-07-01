@@ -14,8 +14,8 @@ import com.fasterxml.jackson.annotation.JsonProperty
 
 data class ApplicationInfoDTO(
     @JsonProperty("splash-screen") var splashScreen : BasicResourceDTO?,
-    var icons : List<BasicResourceDTO>?,
-    var windows : ApplicationInfoDTO?,
-    var linux : ApplicationInfoDTO?,
-    var mac : ApplicationInfoDTO?
+    @JsonProperty("icons") var icons : List<BasicResourceDTO>?,
+    @JsonProperty("windows") var windows : ApplicationInfoDTO?,
+    @JsonProperty("linux") var linux : ApplicationInfoDTO?,
+    @JsonProperty("mac") var mac : ApplicationInfoDTO?
 )

@@ -53,6 +53,7 @@ class DeploymentController(
     @PutMapping(value = ["/{deploymentId}"], consumes = ["application/zip"])
     fun acceptDeploymentArchive(@PathVariable deploymentId: String, @RequestBody content : ByteArray) : ResponseEntity<String> {
         logger.debug("Accepted deployment archive for {}", deploymentId)
+        deploymentService.submitDeploymentArchive(deploymentId, content.inputStream())
         return ResponseEntity.accepted().header(BackstageConstants.DEPLOYMENT_STATUS_HEADER, "some status").build()
     }
 }

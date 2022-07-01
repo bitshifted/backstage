@@ -32,23 +32,25 @@ class DeploymentProcessTask  (
     val deploymentConfig: DeploymentTaskConfig
 ): Runnable {
 
-    val logger = logger(this)
-    val objectMapper = ObjectMapper()
+    private val logger = logger(this)
+    private val objectMapper = ObjectMapper()
     @Autowired var contentService : ContentService? = null
     @Autowired var downloader: Downloader? = null
     @Autowired lateinit var deploymentRepository : DeploymentRepository
 
     override fun run() {
-        logger.info("Start processing deployment {}", deploymentConfig.id)
+        logger.info("Start processing deployment {}", deploymentConfig.deploymentId)
         if (deploymentConfig.stage == DeploymentStage.STAGE_ONE) {
             runDeploymentStageOne()
+        } else {
+            runDeploymentStageTwo()
         }
     }
 
     private fun runDeploymentStageOne() {
         // download dependencies if not exist
         val requirements = RequiredResourcesDTO()
-        deploymentConfig.jvmConfig.dependencies?.forEach {
+        deploymentConfig.deployment.jvmConfig?.dependencies?.forEach {
             val exists = contentService?.exists(it.sha256 ?: "unknown", it.size ?: 0) ?: false
             if (!exists) {
                 logger.debug("Dependency {} does not exist", it.artifactId)
@@ -63,7 +65,7 @@ class DeploymentProcessTask  (
             }
         }
         // check for missing resources
-        deploymentConfig.resources.forEach {
+        deploymentConfig.deployment.resources.forEach {
             val exists = contentService?.exists(it.sha256 ?: "unknown", it.size ?: 0) ?: false
             if (!exists) {
                 logger.info("Adding resource ${it.source} to missing resources list")
@@ -71,12 +73,16 @@ class DeploymentProcessTask  (
             }
         }
 
-        val deployment = deploymentRepository?.findById(deploymentConfig.id)?.orElseThrow { BackstageException(ErrorInfo.DEPLOYMENT_NOT_FOND, deploymentConfig.id) }
+        val deployment = deploymentRepository?.findById(deploymentConfig.deploymentId)?.orElseThrow { BackstageException(ErrorInfo.DEPLOYMENT_NOT_FOND, deploymentConfig.deploymentId) }
         val text = objectMapper.writeValueAsString(requirements)
-        logger.debug("Stage one requirements for deployment ID {}: {}", deploymentConfig.id, text)
+        logger.debug("Stage one requirements for deployment ID {}: {}", deploymentConfig.deploymentId, text)
         deployment?.requiredData = text
         deployment?.status = DeploymentStatus.STAGE_ONE_COMPLETED
         deploymentRepository?.save(deployment)
 
+    }
+
+    private fun runDeploymentStageTwo() {
+        logger.info("Starting deployment stage two...")
     }
 }

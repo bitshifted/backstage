@@ -66,7 +66,7 @@ class DeploymentExecutorService(
     override fun submit(task: Runnable): Future<*> {
         val ftask = super.submit(task)
         if (task is DeploymentProcessTask && ftask is FutureTask) {
-            taskMap[ftask] = task.deploymentConfig.id
+            taskMap[ftask] = task.deploymentConfig.deploymentId
         }
         return ftask
     }
