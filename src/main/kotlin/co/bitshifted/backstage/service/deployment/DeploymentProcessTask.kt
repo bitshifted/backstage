@@ -25,6 +25,16 @@ import co.bitshifted.backstage.util.logger
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
+import java.nio.file.Paths
+import kotlin.io.path.exists
+import kotlin.io.path.inputStream
+import co.bitshifted.backstage.BackstageConstants.DEPLOYMENT_DEPENDENCIES_DIR
+import co.bitshifted.backstage.BackstageConstants.DEPLOYMENT_OUTPUT_DIR
+import co.bitshifted.backstage.BackstageConstants.DEPLOYMENT_RESOURCES_DIR
+import co.bitshifted.backstage.model.OperatingSystem
+import co.bitshifted.backstage.service.deployment.builders.DeploymentBuilder
+import java.nio.file.Files
+import java.nio.file.Path
 
 const val MAVEN_CENTRAL_REPO_BASE_URL = "https://repo.maven.apache.org/maven2"
 
@@ -84,5 +94,52 @@ class DeploymentProcessTask  (
 
     private fun runDeploymentStageTwo() {
         logger.info("Starting deployment stage two...")
+        processFinalContent()
+        val linuxOutputDir = createDeploymentStructure(OperatingSystem.LINUX)
+        val builder = DeploymentBuilder(linuxOutputDir, deploymentConfig.deployment, contentService)
+        builder.build()
+    }
+
+    private fun processFinalContent() {
+        logger.debug("Checking final dependencies...")
+        deploymentConfig.deployment.jvmConfig?.dependencies?.forEach {
+            logger.debug("Checking dependency {}:{}:{}", it.groupId, it.artifactId, it.version)
+            val exists = contentService?.exists(it.sha256 ?: "unknown", it.size ?: 0) ?: false
+            if (!exists) {
+                // copy from deployment directory
+                logger.debug("Dependency {}:{}:{} does not exist in storage, trying deployment directory...", it.groupId, it.artifactId, it.version)
+                val depPath = Paths.get(deploymentConfig.contentPath?.toFile()?.absolutePath, DEPLOYMENT_DEPENDENCIES_DIR, it.sha256)
+                if(depPath.exists()) {
+                    logger.debug("Copying dependency to storage...")
+                    contentService?.save(depPath.inputStream())
+                    logger.debug("Successfully stored dependency {}:{}:{}", it.groupId, it.artifactId, it.version)
+                } else {
+                    logger.error("Required dependency {}:{}:{} not found in deployment directory", it.groupId, it.artifactId, it.version)
+                }
+            }
+        }
+        val resourceBasePath = Paths.get(deploymentConfig.contentPath?.toFile()?.absolutePath, DEPLOYMENT_RESOURCES_DIR)
+        deploymentConfig.deployment.resources.forEach {
+            logger.debug("Checking resource {}, hash {}", it.target, it.sha256)
+            val exists = contentService?.exists(it.sha256 ?: "unknown", it.size ?: 0) ?: false
+            if (!exists) {
+                logger.debug("Resource {} does not exist in storage, trying deployment directory")
+                val resPath = resourceBasePath.resolve(it.target)
+                if (resPath.exists()) {
+                    logger.debug("Resource path {} exists. Copying resource to storage.", resPath.toFile().absolutePath)
+                    contentService?.save(resPath.inputStream())
+                    logger.debug("Resource {]  copied to storage", it.target)
+                } else {
+                    logger.error("Required resource {} not found in deployment directory", it.target)
+                }
+            }
+        }
+    }
+
+    private fun createDeploymentStructure(os : OperatingSystem) : Path {
+        val outputDir = Paths.get(deploymentConfig.contentPath?.toFile()?.absolutePath, DEPLOYMENT_OUTPUT_DIR, os.title)
+        Files.createDirectories(outputDir)
+        logger.info("Created output directory {}", outputDir.toFile().absolutePath)
+        return outputDir
     }
 }

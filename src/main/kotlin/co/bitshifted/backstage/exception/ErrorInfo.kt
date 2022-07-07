@@ -18,5 +18,8 @@ enum class ErrorInfo (val errorCode : Int, val httpStatus : Int) {
     INVALID_INPUT(1110, BAD_REQUEST.value()),
     NON_EXISTENT_APPLICATION_ID(1200, BAD_REQUEST.value()),
 
-    DEPLOYMENT_NOT_FOND(1300, HttpStatus.NOT_FOUND.value())
+    DEPLOYMENT_NOT_FOND(1300, HttpStatus.NOT_FOUND.value()),
+    TOOL_RUN_ERROR(errorCode = 1310, HttpStatus.INTERNAL_SERVER_ERROR.value()),
+
+    EMPTY_CONTENT_CHECKSUM(1400, HttpStatus.BAD_REQUEST.value())
 }

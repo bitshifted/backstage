@@ -19,10 +19,19 @@ object BackstageConstants {
      */
      val UTC_TIME_ZONE = ZoneId.of("UTC")
 
+    val JDK_MODULES_PREFIXES = arrayOf("java.", "jdk.")
+
     /**
      * HTTP header containing URL of deployment status.
      */
     const val DEPLOYMENT_STATUS_HEADER = "X-Deployment-Status"
 
     const val THREAD_POOL_KEEP_ALIVE_MS = 500L
+
+    const val DEPLOYMENT_DEPENDENCIES_DIR = "dependencies"
+    const val DEPLOYMENT_RESOURCES_DIR = "resources"
+    const val DEPLOYMENT_OUTPUT_DIR = "output"
+    const val OUTPUT_CLASSPATH_DIR = "cp"
+    const val OUTPUT_MODULES_DIR = "modules"
+    const val JAR_EXTENSION = ".jar"
 }
