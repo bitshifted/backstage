@@ -28,8 +28,10 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import javax.servlet.http.HttpServletRequest
 
+const val BASE_PATH = "/v1/deployments"
+
 @RestController
-@RequestMapping("/v1/deployments")
+@RequestMapping(BASE_PATH)
 class DeploymentController(
     @Autowired val deploymentService: DeploymentService) {
 
@@ -39,7 +41,7 @@ class DeploymentController(
     fun startDeployment(@RequestBody deployment : DeploymentDTO, request : HttpServletRequest) : ResponseEntity<String> {
         logger.debug("Running deployment stage one for application id {}", deployment.applicationId)
         val deploymentId = deploymentService.submitDeployment(deployment)
-        val statusUrl = generateServerUrl(request, "/v1/deployments/" + deploymentId)
+        val statusUrl = generateServerUrl(request, "$BASE_PATH/$deploymentId")
 
         return ResponseEntity.accepted().header(BackstageConstants.DEPLOYMENT_STATUS_HEADER, statusUrl).build()
     }
@@ -51,9 +53,10 @@ class DeploymentController(
     }
 
     @PutMapping(value = ["/{deploymentId}"], consumes = ["application/zip"])
-    fun acceptDeploymentArchive(@PathVariable deploymentId: String, @RequestBody content : ByteArray) : ResponseEntity<String> {
+    fun acceptDeploymentArchive(@PathVariable deploymentId: String, @RequestBody content : ByteArray, request : HttpServletRequest) : ResponseEntity<String> {
         logger.debug("Accepted deployment archive for {}", deploymentId)
         deploymentService.submitDeploymentArchive(deploymentId, content.inputStream())
-        return ResponseEntity.accepted().header(BackstageConstants.DEPLOYMENT_STATUS_HEADER, "some status").build()
+        val statusUrl = generateServerUrl(request, "$BASE_PATH/$deploymentId")
+        return ResponseEntity.accepted().header(BackstageConstants.DEPLOYMENT_STATUS_HEADER, statusUrl).build()
     }
 }

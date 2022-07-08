@@ -97,7 +97,10 @@ class DeploymentProcessTask  (
         processFinalContent()
         val linuxOutputDir = createDeploymentStructure(OperatingSystem.LINUX)
         val builder = DeploymentBuilder(linuxOutputDir, deploymentConfig.deployment, contentService)
-        builder.build()
+        val success = builder.build()
+        val deployment = deploymentRepository?.findById(deploymentConfig.deploymentId)?.orElseThrow { BackstageException(ErrorInfo.DEPLOYMENT_NOT_FOND, deploymentConfig.deploymentId) }
+        deployment.status = if(success) DeploymentStatus.SUCCESS else DeploymentStatus.FAILED
+        deploymentRepository?.save(deployment)
     }
 
     private fun processFinalContent() {

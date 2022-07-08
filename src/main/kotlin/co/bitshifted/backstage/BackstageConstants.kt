@@ -19,7 +19,7 @@ object BackstageConstants {
      */
      val UTC_TIME_ZONE = ZoneId.of("UTC")
 
-    val JDK_MODULES_PREFIXES = arrayOf("java.", "jdk.")
+    val JDK_MODULES_PREFIXES = listOf("java.", "jdk.")
 
     /**
      * HTTP header containing URL of deployment status.

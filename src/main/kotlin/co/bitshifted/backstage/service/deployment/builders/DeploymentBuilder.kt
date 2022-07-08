@@ -30,11 +30,12 @@ open class DeploymentBuilder(val baseDir : Path, val deployment : DeploymentDTO,
     lateinit var classpathDir : Path
     lateinit var modulesDir : Path
 
-    fun build() {
+    fun build() : Boolean {
         createDirectoryStructure()
         copyDependencies()
         copyResources()
         buildJdkImage()
+        return true
     }
 
     protected fun createDirectoryStructure() {

@@ -53,4 +53,8 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="deployment-required-length" author="vdjurovic" dbms="mysql">
+        <modifyDataType columnName="required_data" tableName="deployment" newDataType="clob" />
+    </changeSet>
+
 </databaseChangeLog>
