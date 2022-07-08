@@ -15,6 +15,7 @@ import co.bitshifted.backstage.BackstageConstants.OUTPUT_CLASSPATH_DIR
 import co.bitshifted.backstage.BackstageConstants.OUTPUT_MODULES_DIR
 import co.bitshifted.backstage.dto.DeploymentDTO
 import co.bitshifted.backstage.exception.BackstageException
+import co.bitshifted.backstage.exception.DeploymentException
 import co.bitshifted.backstage.exception.ErrorInfo
 import co.bitshifted.backstage.service.ContentService
 import co.bitshifted.backstage.util.logger
@@ -31,10 +32,14 @@ open class DeploymentBuilder(val baseDir : Path, val deployment : DeploymentDTO,
     lateinit var modulesDir : Path
 
     fun build() : Boolean {
-        createDirectoryStructure()
-        copyDependencies()
-        copyResources()
-        buildJdkImage()
+        try {
+            createDirectoryStructure()
+            copyDependencies()
+            copyResources()
+            buildJdkImage()
+        } catch(ex : DeploymentException) {
+            return false
+        }
         return true
     }
 
@@ -79,5 +84,9 @@ open class DeploymentBuilder(val baseDir : Path, val deployment : DeploymentDTO,
         val toolRunner = ToolsRunner(baseDir)
         val jdkModules = toolRunner.getJdkModules()
         logger.debug("JDK modules to include: {}", jdkModules)
+        if (jdkModules.isEmpty()) {
+            throw DeploymentException("Failed to get any JDK module")
+        }
+        toolRunner.createRuntimeImage(jdkModules, )
     }
 }

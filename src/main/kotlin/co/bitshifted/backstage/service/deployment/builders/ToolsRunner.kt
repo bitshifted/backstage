@@ -12,6 +12,7 @@ package co.bitshifted.backstage.service.deployment.builders
 
 import co.bitshifted.backstage.BackstageConstants
 import co.bitshifted.backstage.exception.BackstageException
+import co.bitshifted.backstage.exception.DeploymentException
 import co.bitshifted.backstage.exception.ErrorInfo
 import co.bitshifted.backstage.util.logger
 import java.io.BufferedReader
@@ -51,10 +52,36 @@ class ToolsRunner(val buildDir: Path) {
             }
         } else {
             logger.error("Error running jdeps: {}", errString.toString())
-            throw BackstageException(ErrorInfo.TOOL_RUN_ERROR, "jdeps")
+            throw DeploymentException("Error running jdeps: $errString" )
         }
         logger.debug("Found JDK modules: {}", modules)
         return modules
+    }
+
+    fun createRuntimeImage(modules : Set<String>, moduleDirs : List<Path>, outputDir : Path) {
+        logger.info("Creating runtime image...")
+        val outString = StringWriter();
+        val out = PrintWriter(outString);
+        val errString = StringWriter();
+        val err = PrintWriter(errString);
+
+        val argsList = mutableListOf<String>()
+        argsList.add("--verbose")
+        argsList.add("--module-path")
+        argsList.add(concatenateModulesPath(moduleDirs))
+        argsList.add("--add-modules")
+        argsList.add(createModulesArgs(modules))
+        argsList.add("--output")
+        argsList.add(outputDir.toAbsolutePath().toString())
+        logger.debug("jlink arguments: {}", argsList)
+
+        val result = jlink.run(out, err, *argsList.toTypedArray())
+        if (result == 0) {
+            logger.info("Runtime image generated successfully")
+        } else {
+            logger.error("Error running jlink: {}", errString)
+            throw DeploymentException("Error running jlink: ${err.toString()}" )
+        }
     }
 
     private fun isJdkModule(moduleName: String): Boolean {
@@ -65,5 +92,17 @@ class ToolsRunner(val buildDir: Path) {
     private fun getAllJarsInDirectory(directory: Path): List<String> {
         return Files.list(directory).filter { it.name.endsWith(BackstageConstants.JAR_EXTENSION) }
             .map { it.toFile().absolutePath }.toList()
+    }
+
+    private fun concatenateModulesPath(paths: List<Path>) : String {
+        val sb = StringBuilder(paths[0].toAbsolutePath().toString())
+        paths.stream().skip(1).forEach { sb.append(":").append(it.toAbsolutePath().toString()) }
+        return sb.toString()
+    }
+
+    private fun createModulesArgs(modules : Set<String>) : String {
+        val sb = StringBuilder()
+        modules.forEach { sb.append(",").append(it) }
+        return sb.toString().substring(1)
     }
 }

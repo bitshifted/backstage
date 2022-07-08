@@ -34,4 +34,5 @@ object BackstageConstants {
     const val OUTPUT_CLASSPATH_DIR = "cp"
     const val OUTPUT_MODULES_DIR = "modules"
     const val JAR_EXTENSION = ".jar"
+    const val JDK_JMODS_DIR_NAME = "jmods"
 }
