@@ -33,6 +33,7 @@ import co.bitshifted.backstage.BackstageConstants.DEPLOYMENT_OUTPUT_DIR
 import co.bitshifted.backstage.BackstageConstants.DEPLOYMENT_RESOURCES_DIR
 import co.bitshifted.backstage.model.OperatingSystem
 import co.bitshifted.backstage.service.deployment.builders.DeploymentBuilder
+import co.bitshifted.backstage.service.deployment.builders.DeploymentBuilderConfig
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -47,6 +48,7 @@ class DeploymentProcessTask  (
     @Autowired var contentService : ContentService? = null
     @Autowired var downloader: Downloader? = null
     @Autowired lateinit var deploymentRepository : DeploymentRepository
+    @Autowired lateinit var deploymentBuilderFactory : java.util.function.Function<DeploymentBuilderConfig, DeploymentBuilder>
 
     override fun run() {
         logger.info("Start processing deployment {}", deploymentConfig.deploymentId)
@@ -96,7 +98,7 @@ class DeploymentProcessTask  (
         logger.info("Starting deployment stage two...")
         processFinalContent()
         val linuxOutputDir = createDeploymentStructure(OperatingSystem.LINUX)
-        val builder = DeploymentBuilder(linuxOutputDir, deploymentConfig.deployment, contentService)
+        val builder = deploymentBuilderFactory.apply(DeploymentBuilderConfig( linuxOutputDir, deploymentConfig.deployment, contentService))
         val success = builder.build()
         val deployment = deploymentRepository?.findById(deploymentConfig.deploymentId)?.orElseThrow { BackstageException(ErrorInfo.DEPLOYMENT_NOT_FOND, deploymentConfig.deploymentId) }
         deployment.status = if(success) DeploymentStatus.SUCCESS else DeploymentStatus.FAILED

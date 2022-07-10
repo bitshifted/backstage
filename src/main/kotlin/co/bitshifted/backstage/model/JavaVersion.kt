@@ -10,9 +10,12 @@
 
 package co.bitshifted.backstage.model
 
-import co.bitshifted.backstage.dto.DeploymentDTO
-import java.nio.file.Path
+import com.fasterxml.jackson.annotation.JsonFormat
+import com.fasterxml.jackson.annotation.JsonValue
 
-class DeploymentTaskConfig(val deploymentId : String, val stage : DeploymentStage, val deployment : DeploymentDTO, val contentPath : Path? = null) {
-
+@JsonFormat(shape = JsonFormat.Shape.OBJECT)
+enum class JavaVersion(@JsonValue val major : String) {
+    JAVA_8("8"),
+    JAVA_11("11"),
+    JAVA_17("17")
 }

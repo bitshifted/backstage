@@ -55,13 +55,13 @@ class DeploymentExecutorService(
         if(taskMap.containsKey(r)) {
             val deploymentId = taskMap[r] ?: "unknown"
             logger.debug("Deployment ID: {}", deploymentId)
-            val curDeployment = deploymentRepository.findById(deploymentId).orElseThrow { BackstageException(ErrorInfo.DEPLOYMENT_NOT_FOND, deploymentId) }
-            if (curDeployment.status.ordinal >= DeploymentStatus.STAGE_TWO_COMPLETED.ordinal ) {
-                val newStatus = if (t != null) DeploymentStatus.FAILED else DeploymentStatus.SUCCESS
-                curDeployment.status = newStatus
-                deploymentRepository.save(curDeployment)
-                logger.debug("Updated status for deployment ID {} to {}", deploymentId, newStatus)
-            }
+//            val curDeployment = deploymentRepository.findById(deploymentId).orElseThrow { BackstageException(ErrorInfo.DEPLOYMENT_NOT_FOND, deploymentId) }
+//            if (curDeployment.status.ordinal <= DeploymentStatus.STAGE_TWO_COMPLETED.ordinal ) {
+//                val newStatus = if (t != null) DeploymentStatus.FAILED else DeploymentStatus.SUCCESS
+//                curDeployment.status = newStatus
+//                deploymentRepository.save(curDeployment)
+//                logger.debug("Updated status for deployment ID {} to {}", deploymentId, newStatus)
+//            }
         }
     }
 

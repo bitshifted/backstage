@@ -8,11 +8,13 @@
  *
  */
 
-package co.bitshifted.backstage.model
+package co.bitshifted.backstage.service
 
-import co.bitshifted.backstage.dto.DeploymentDTO
-import java.nio.file.Path
+import co.bitshifted.backstage.model.JavaVersion
+import co.bitshifted.backstage.model.JvmVendor
+import java.net.URI
 
-class DeploymentTaskConfig(val deploymentId : String, val stage : DeploymentStage, val deployment : DeploymentDTO, val contentPath : Path? = null) {
+interface ResourceMapping {
 
+    fun getJdkLocation(vendor : JvmVendor, version : JavaVersion, exact : String = "") : URI
 }

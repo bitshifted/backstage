@@ -10,11 +10,17 @@
 
 package co.bitshifted.backstage.dto
 
-import com.fasterxml.jackson.annotation.JsonIgnore
+import co.bitshifted.backstage.model.JavaVersion
+import co.bitshifted.backstage.model.JvmVendor
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import com.fasterxml.jackson.annotation.JsonIgnoreType
+import com.fasterxml.jackson.annotation.JsonProperty
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class JvmConfigurationDTO(
-    var dependencies : List<JvmDependencyDTO>? = null
+   @JsonProperty("dependencies") var dependencies : List<JvmDependencyDTO>? = null,
+    @JsonProperty("vendor") var vendor : JvmVendor = JvmVendor.ADOPTIUM,
+    @JsonProperty("major-version")  var majorVersion : JavaVersion = JavaVersion.JAVA_8,
+    @JsonProperty("fixed-version") var fixedVersion : String? = null
+
+
 )

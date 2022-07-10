@@ -8,11 +8,16 @@
  *
  */
 
-package co.bitshifted.backstage.model
+package co.bitshifted.backstage
 
-import co.bitshifted.backstage.dto.DeploymentDTO
-import java.nio.file.Path
+import java.io.File
 
-class DeploymentTaskConfig(val deploymentId : String, val stage : DeploymentStage, val deployment : DeploymentDTO, val contentPath : Path? = null) {
-
+fun deleteDirectory(file: File) {
+    if (file.isDirectory) {
+        val contents = file.listFiles()
+        for (f in contents) {
+            deleteDirectory(f)
+        }
+    }
+    file.delete()
 }

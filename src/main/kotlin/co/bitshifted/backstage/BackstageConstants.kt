@@ -31,8 +31,11 @@ object BackstageConstants {
     const val DEPLOYMENT_DEPENDENCIES_DIR = "dependencies"
     const val DEPLOYMENT_RESOURCES_DIR = "resources"
     const val DEPLOYMENT_OUTPUT_DIR = "output"
+    const val DEPLOYMENT_CONFIG_FILE = "deployment.json"
     const val OUTPUT_CLASSPATH_DIR = "cp"
     const val OUTPUT_MODULES_DIR = "modules"
+    const val OUTPUT_JRE_DIR = "jre"
     const val JAR_EXTENSION = ".jar"
     const val JDK_JMODS_DIR_NAME = "jmods"
+    const val LATEST_JAVA_DIR_LINK = "latest"
 }

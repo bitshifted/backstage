@@ -8,11 +8,10 @@
  *
  */
 
-package co.bitshifted.backstage.model
+package co.bitshifted.backstage.service.deployment.builders
 
 import co.bitshifted.backstage.dto.DeploymentDTO
+import co.bitshifted.backstage.service.ContentService
 import java.nio.file.Path
 
-class DeploymentTaskConfig(val deploymentId : String, val stage : DeploymentStage, val deployment : DeploymentDTO, val contentPath : Path? = null) {
-
-}
+data class DeploymentBuilderConfig(val baseDir : Path, val deployment : DeploymentDTO, val contentService: ContentService?){}

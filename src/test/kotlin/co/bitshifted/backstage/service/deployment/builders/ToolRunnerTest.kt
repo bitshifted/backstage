@@ -11,6 +11,7 @@
 package co.bitshifted.backstage.service.deployment.builders
 
 import co.bitshifted.backstage.BackstageConstants
+import co.bitshifted.backstage.deleteDirectory
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
@@ -57,13 +58,4 @@ class ToolRunnerTest {
         deleteDirectory(outputDir.toFile())
     }
 
-    private fun deleteDirectory(file: File) {
-        if (file.isDirectory) {
-            val contents = file.listFiles()
-            for (f in contents) {
-                deleteDirectory(f)
-            }
-        }
-        file.delete()
-    }
 }

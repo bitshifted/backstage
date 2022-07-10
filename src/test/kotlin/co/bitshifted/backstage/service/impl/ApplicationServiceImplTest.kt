@@ -1,6 +1,6 @@
 /*
  *
- *  * Copyright (c) 2022  Bitshift D.O.O (http://bitshifted.co)
+ *  * Copyright (c) 2022-2022  Bitshift D.O.O (http://bitshifted.co)
  *  *
  *  * This Source Code Form is subject to the terms of the Mozilla Public
  *  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,11 +8,10 @@
  *
  */
 
-package co.bitshifted.backstage.service
+package co.bitshifted.backstage.service.impl
 
 import co.bitshifted.backstage.repository.ApplicationRepository
 import co.bitshifted.backstage.entity.Application
-import co.bitshifted.backstage.service.impl.ApplicationServiceImpl
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock

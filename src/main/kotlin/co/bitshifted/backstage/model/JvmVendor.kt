@@ -10,9 +10,7 @@
 
 package co.bitshifted.backstage.model
 
-import co.bitshifted.backstage.dto.DeploymentDTO
-import java.nio.file.Path
-
-class DeploymentTaskConfig(val deploymentId : String, val stage : DeploymentStage, val deployment : DeploymentDTO, val contentPath : Path? = null) {
-
+enum class JvmVendor(val code : String, val display : String) {
+    OPENJDK("openjdk", "OpenJDK"),
+    ADOPTIUM("adoptium", "Eclipse Adoptium")
 }
