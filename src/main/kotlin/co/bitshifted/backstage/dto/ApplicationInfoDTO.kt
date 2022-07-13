@@ -10,11 +10,12 @@
 
 package co.bitshifted.backstage.dto
 
+import co.bitshifted.ignite.common.model.BasicResource
 import com.fasterxml.jackson.annotation.JsonProperty
 
 data class ApplicationInfoDTO(
-    @JsonProperty("splash-screen") var splashScreen : BasicResourceDTO?,
-    @JsonProperty("icons") var icons : List<BasicResourceDTO>?,
+    @JsonProperty("splash-screen") var splashScreen : BasicResource?,
+    @JsonProperty("icons") var icons : List<BasicResource>?,
     @JsonProperty("windows") var windows : ApplicationInfoDTO?,
     @JsonProperty("linux") var linux : ApplicationInfoDTO?,
     @JsonProperty("mac") var mac : ApplicationInfoDTO?

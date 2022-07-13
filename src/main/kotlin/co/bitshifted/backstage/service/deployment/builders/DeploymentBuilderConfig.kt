@@ -10,7 +10,7 @@
 
 package co.bitshifted.backstage.service.deployment.builders
 
-import co.bitshifted.backstage.dto.DeploymentDTO
+import co.bitshifted.ignite.common.dto.DeploymentDTO
 import co.bitshifted.backstage.service.ContentService
 import java.nio.file.Path
 

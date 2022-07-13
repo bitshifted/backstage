@@ -12,8 +12,8 @@ package co.bitshifted.backstage.service.impl
 
 import co.bitshifted.backstage.BackstageConstants
 import co.bitshifted.backstage.exception.DeploymentException
-import co.bitshifted.backstage.model.JavaVersion
-import co.bitshifted.backstage.model.JvmVendor
+import co.bitshifted.ignite.common.model.JavaVersion
+import co.bitshifted.ignite.common.model.JvmVendor
 import co.bitshifted.backstage.service.ResourceMapping
 import co.bitshifted.backstage.util.logger
 import org.springframework.beans.factory.annotation.Value
@@ -28,7 +28,7 @@ class FileSystemResourceMapping(@Value("\${jdk.root.location}") val jdkRoot : St
     val logger = logger(this)
 
     override fun getJdkLocation(vendor: JvmVendor, version: JavaVersion, exact: String): URI {
-        val base = Path.of(jdkRoot, vendor.code, version.major)
+        val base = Path.of(jdkRoot, vendor.code, version.display)
         if (base.notExists()) {
             throw DeploymentException("Directory ${base.toFile().absolutePath} does not exist")
         }

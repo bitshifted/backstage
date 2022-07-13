@@ -11,13 +11,12 @@
 package co.bitshifted.backstage.controller
 
 import co.bitshifted.backstage.BackstageConstants
-import co.bitshifted.backstage.dto.DeploymentDTO
-import co.bitshifted.backstage.dto.DeploymentStatusDTO
+import co.bitshifted.ignite.common.dto.DeploymentStatusDTO
 import co.bitshifted.backstage.service.DeploymentService
 import co.bitshifted.backstage.util.generateServerUrl
 import co.bitshifted.backstage.util.logger
+import co.bitshifted.ignite.common.dto.DeploymentDTO
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable

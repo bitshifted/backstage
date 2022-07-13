@@ -55,9 +55,9 @@ open class DeploymentBuilder(val config : DeploymentBuilderConfig) {
     }
 
     protected fun copyDependencies() {
-        config.deployment.jvmConfig?.dependencies?.forEach {
+        config.deployment.jvmConfiguration?.dependencies?.forEach {
             var targetDIr : Path
-            if (it.modular) {
+            if (it.isModular) {
                 targetDIr = modulesDir
                 logger.debug("Copying dependency {}:{}:{} to {}", it.groupId, it.artifactId, it.version, targetDIr)
             } else {
@@ -85,7 +85,7 @@ open class DeploymentBuilder(val config : DeploymentBuilderConfig) {
 
     protected fun buildJdkImage() {
         logger.info("Building JDK image")
-        val jvmConfig = config.deployment.jvmConfig ?: throw DeploymentException("Can not find JVm configuration")
+        val jvmConfig = config.deployment.jvmConfiguration ?: throw DeploymentException("Can not find JVm configuration")
         val jdkLocation = resourceMapping.getJdkLocation(jvmConfig.vendor, jvmConfig.majorVersion, jvmConfig.fixedVersion ?: "")
         val moduleDirs = listOf(Path.of(jdkLocation).resolve(BackstageConstants.JDK_JMODS_DIR_NAME), modulesDir)
         val jreOutputDir = config.baseDir.resolve(BackstageConstants.OUTPUT_JRE_DIR)

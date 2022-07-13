@@ -10,9 +10,8 @@
 
 package co.bitshifted.backstage.service
 
-import co.bitshifted.backstage.dto.DeploymentDTO
-import co.bitshifted.backstage.dto.DeploymentStatusDTO
-import co.bitshifted.backstage.dto.RequiredResourcesDTO
+import co.bitshifted.ignite.common.dto.DeploymentDTO
+import co.bitshifted.ignite.common.dto.DeploymentStatusDTO
 import java.io.InputStream
 
 interface DeploymentService {

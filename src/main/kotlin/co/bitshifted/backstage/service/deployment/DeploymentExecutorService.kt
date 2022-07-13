@@ -13,7 +13,7 @@ package co.bitshifted.backstage.service.deployment
 import co.bitshifted.backstage.BackstageConstants
 import co.bitshifted.backstage.exception.BackstageException
 import co.bitshifted.backstage.exception.ErrorInfo
-import co.bitshifted.backstage.model.DeploymentStatus
+import co.bitshifted.ignite.common.model.DeploymentStatus
 import co.bitshifted.backstage.repository.DeploymentRepository
 import co.bitshifted.backstage.util.logger
 import co.bitshifted.backstage.util.maxThreadPoolSize
@@ -55,7 +55,14 @@ class DeploymentExecutorService(
         if(taskMap.containsKey(r)) {
             val deploymentId = taskMap[r] ?: "unknown"
             logger.debug("Deployment ID: {}", deploymentId)
-//            val curDeployment = deploymentRepository.findById(deploymentId).orElseThrow { BackstageException(ErrorInfo.DEPLOYMENT_NOT_FOND, deploymentId) }
+            if (t != null ) {
+                val curDeployment = deploymentRepository.findById(deploymentId).orElseThrow { BackstageException(ErrorInfo.DEPLOYMENT_NOT_FOND, deploymentId) }
+                curDeployment.status = DeploymentStatus.FAILED
+                deploymentRepository.save(curDeployment)
+                logger.debug("Updated status for deployment ID {} to {}", deploymentId, DeploymentStatus.FAILED)
+                logger.error("Got exception:", t)
+            }
+
 //            if (curDeployment.status.ordinal <= DeploymentStatus.STAGE_TWO_COMPLETED.ordinal ) {
 //                val newStatus = if (t != null) DeploymentStatus.FAILED else DeploymentStatus.SUCCESS
 //                curDeployment.status = newStatus

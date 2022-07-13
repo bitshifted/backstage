@@ -10,8 +10,7 @@
 
 package co.bitshifted.backstage.util
 
-import co.bitshifted.backstage.dto.JvmDependencyDTO
-import org.springframework.http.HttpStatus
+import co.bitshifted.ignite.common.dto.JavaDependencyDTO
 import org.springframework.stereotype.Component
 import java.io.InputStream
 import java.net.URI
@@ -26,7 +25,7 @@ class Downloader (val client : HttpClient = HttpClient.newBuilder().connectTimeo
 
     val logger = logger(this)
 
-    fun downloadJavaDependency(repoUrl : String, dependency : JvmDependencyDTO) : Pair<InputStream, Int> {
+    fun downloadJavaDependency(repoUrl : String, dependency : JavaDependencyDTO) : Pair<InputStream, Int> {
         val url =generateDependencyUrl(repoUrl, dependency)
         logger.debug("Downloading dependency {}", url)
         val req = HttpRequest.newBuilder(URI(url)).GET().build()
@@ -34,7 +33,7 @@ class Downloader (val client : HttpClient = HttpClient.newBuilder().connectTimeo
         return Pair(response.body(), response.statusCode())
     }
 
-    private fun generateDependencyUrl(repoUrl : String, jvmDependencyDTO: JvmDependencyDTO) : String {
+    private fun generateDependencyUrl(repoUrl : String, jvmDependencyDTO: JavaDependencyDTO) : String {
         val group = jvmDependencyDTO.groupId?.replace(Regex("\\."), "/")
         val sb = StringBuilder(jvmDependencyDTO.artifactId)
         sb.append("-").append(jvmDependencyDTO.version)

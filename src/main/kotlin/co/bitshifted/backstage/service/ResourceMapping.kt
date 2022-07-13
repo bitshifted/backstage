@@ -10,8 +10,8 @@
 
 package co.bitshifted.backstage.service
 
-import co.bitshifted.backstage.model.JavaVersion
-import co.bitshifted.backstage.model.JvmVendor
+import co.bitshifted.ignite.common.model.JavaVersion
+import co.bitshifted.ignite.common.model.JvmVendor
 import java.net.URI
 
 interface ResourceMapping {

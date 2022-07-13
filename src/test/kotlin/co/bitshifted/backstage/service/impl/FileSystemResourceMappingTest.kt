@@ -11,8 +11,8 @@
 package co.bitshifted.backstage.service.impl
 
 import co.bitshifted.backstage.deleteDirectory
-import co.bitshifted.backstage.model.JavaVersion
-import co.bitshifted.backstage.model.JvmVendor
+import co.bitshifted.ignite.common.model.JavaVersion
+import co.bitshifted.ignite.common.model.JvmVendor
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import java.nio.file.Files
@@ -24,7 +24,7 @@ class FileSystemResourceMappingTest {
     @Test
     fun testGetJdkLocation() {
         val jdkRoot = Files.createTempDirectory("backstage-test")
-        val jdkDir = Paths.get(jdkRoot.toAbsolutePath().toString(), JvmVendor.OPENJDK.code, JavaVersion.JAVA_11.major, "11.0.2")
+        val jdkDir = Paths.get(jdkRoot.toAbsolutePath().toString(), JvmVendor.OPENJDK.code, JavaVersion.JAVA_11.display, "11.0.2")
         Files.createDirectories(jdkDir)
         val latest = jdkDir.parent.resolve("latest")
         Files.createSymbolicLink(latest, jdkDir)
