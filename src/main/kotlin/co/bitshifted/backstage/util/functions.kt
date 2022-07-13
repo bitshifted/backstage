@@ -10,6 +10,8 @@
 
 package co.bitshifted.backstage.util
 
+import co.bitshifted.ignite.common.dto.DeploymentDTO
+import co.bitshifted.ignite.common.model.BasicResource
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import javax.servlet.http.HttpServletRequest
@@ -35,4 +37,18 @@ fun generateServerUrl(request: HttpServletRequest, path: String): String? {
     }
     sb.append(path)
     return sb.toString()
+}
+
+fun collectAllDeploymentResources(deployment : DeploymentDTO) : List<BasicResource> {
+    val allResources = mutableListOf<BasicResource>()
+    allResources.addAll(deployment.resources)
+    if (deployment.applicationInfo.splashScreen != null) {
+        allResources.add(deployment.applicationInfo.splashScreen)
+    }
+
+    allResources.addAll(deployment.applicationInfo.icons ?: emptyList())
+    allResources.addAll(deployment.applicationInfo.linux.icons ?: emptyList())
+    allResources.addAll(deployment.applicationInfo.mac.icons ?: emptyList())
+    allResources.addAll(deployment.applicationInfo.windows.icons ?: emptyList())
+    return allResources
 }

@@ -79,7 +79,15 @@ open class DeploymentBuilder(val config : DeploymentBuilderConfig) {
             config.contentService?.get(it.sha256 ?: throw BackstageException(ErrorInfo.EMPTY_CONTENT_CHECKSUM)).use {
                 Files.copy(it, target, StandardCopyOption.REPLACE_EXISTING)
             }
-
+        }
+        config.deployment.applicationInfo.linux.icons.forEach{
+            val name = if (it.target != null) it.target else it.source
+            val target = config.baseDir.resolve(name)
+            logger.debug("Icon target: {}", target.toFile().absolutePath)
+            Files.createDirectories(target.parent)
+            config.contentService?.get(it.sha256 ?: throw BackstageException(ErrorInfo.EMPTY_CONTENT_CHECKSUM)).use {
+                Files.copy(it, target, StandardCopyOption.REPLACE_EXISTING)
+            }
         }
     }
 

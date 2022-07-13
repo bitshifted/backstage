@@ -24,8 +24,11 @@ import co.bitshifted.backstage.service.ContentService
 import co.bitshifted.backstage.service.deployment.builders.DeploymentBuilder
 import co.bitshifted.backstage.service.deployment.builders.DeploymentBuilderConfig
 import co.bitshifted.backstage.util.Downloader
+import co.bitshifted.backstage.util.collectAllDeploymentResources
 import co.bitshifted.backstage.util.logger
 import co.bitshifted.ignite.common.dto.RequiredResourcesDTO
+import co.bitshifted.ignite.common.model.BasicResource
+import co.bitshifted.ignite.common.model.DeploymentStatus.*
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
@@ -50,11 +53,16 @@ class DeploymentProcessTask  (
 
     override fun run() {
         logger.info("Start processing deployment {}", deploymentConfig.deploymentId)
-        if (deploymentConfig.stage == DeploymentStage.STAGE_ONE) {
-            runDeploymentStageOne()
-        } else {
-            runDeploymentStageTwo()
+        try {
+            if (deploymentConfig.stage == DeploymentStage.STAGE_ONE) {
+                runDeploymentStageOne()
+            } else {
+                runDeploymentStageTwo()
+            }
+        } catch(th : Throwable) {
+            logger.error("Failed to run deployment process", th)
         }
+
     }
 
     private fun runDeploymentStageOne() {
@@ -75,7 +83,8 @@ class DeploymentProcessTask  (
             }
         }
         // check for missing resources
-        deploymentConfig.deployment.resources.forEach {
+        val allResources = collectAllDeploymentResources(deploymentConfig.deployment)
+        allResources.forEach {
             val exists = contentService?.exists(it.sha256 ?: "unknown", it.size ?: 0) ?: false
             if (!exists) {
                 logger.info("Adding resource ${it.source} to missing resources list")
@@ -87,7 +96,7 @@ class DeploymentProcessTask  (
         val text = objectMapper.writeValueAsString(requirements)
         logger.debug("Stage one requirements for deployment ID {}: {}", deploymentConfig.deploymentId, text)
         deployment?.requiredData = text
-        deployment?.status = DeploymentStatus.STAGE_ONE_COMPLETED
+        deployment?.status = STAGE_ONE_COMPLETED
         deploymentRepository?.save(deployment)
 
         logger.info("Deployment ID {}, status: {}", deploymentConfig.deploymentId, deployment.status)
@@ -95,13 +104,12 @@ class DeploymentProcessTask  (
 
     private fun runDeploymentStageTwo() {
         logger.info("Starting deployment stage two...")
+        setDeploymentStatus(deploymentConfig.deploymentId, STAGE_TWO_IN_PROGRESS)
         processFinalContent()
         val linuxOutputDir = createDeploymentStructure(OperatingSystem.LINUX)
         val builder = deploymentBuilderFactory.apply(DeploymentBuilderConfig( linuxOutputDir, deploymentConfig.deployment, contentService))
         val success = builder.build()
-        val deployment = deploymentRepository?.findById(deploymentConfig.deploymentId)?.orElseThrow { BackstageException(ErrorInfo.DEPLOYMENT_NOT_FOND, deploymentConfig.deploymentId) }
-        deployment.status = if(success) DeploymentStatus.SUCCESS else DeploymentStatus.FAILED
-        deploymentRepository?.save(deployment)
+        setDeploymentStatus(deploymentConfig.deploymentId, if(success) SUCCESS else FAILED)
     }
 
     private fun processFinalContent() {
@@ -122,8 +130,9 @@ class DeploymentProcessTask  (
                 }
             }
         }
+        val allResources = collectAllDeploymentResources(deploymentConfig.deployment)
         val resourceBasePath = Paths.get(deploymentConfig.contentPath?.toFile()?.absolutePath, DEPLOYMENT_RESOURCES_DIR)
-        deploymentConfig.deployment.resources.forEach {
+        allResources.forEach {
             logger.debug("Checking resource {}, hash {}", it.target, it.sha256)
             val exists = contentService?.exists(it.sha256 ?: "unknown", it.size ?: 0) ?: false
             if (!exists) {
@@ -145,5 +154,11 @@ class DeploymentProcessTask  (
         Files.createDirectories(outputDir)
         logger.info("Created output directory {}", outputDir.toFile().absolutePath)
         return outputDir
+    }
+
+    private fun setDeploymentStatus(deploymentId : String, status : DeploymentStatus) {
+        val deployment = deploymentRepository?.findById(deploymentConfig.deploymentId)?.orElseThrow { BackstageException(ErrorInfo.DEPLOYMENT_NOT_FOND, deploymentConfig.deploymentId) }
+        deployment.status = status
+        deploymentRepository?.save(deployment)
     }
 }
