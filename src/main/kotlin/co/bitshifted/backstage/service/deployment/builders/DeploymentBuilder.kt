@@ -21,6 +21,9 @@ import co.bitshifted.backstage.exception.ErrorInfo
 import co.bitshifted.backstage.model.OperatingSystem
 import co.bitshifted.backstage.service.ResourceMapping
 import co.bitshifted.backstage.util.logger
+import freemarker.template.Configuration
+import freemarker.template.TemplateExceptionHandler
+import freemarker.template.Version
 import org.apache.commons.io.FileUtils
 import org.springframework.beans.factory.annotation.Autowired
 import java.io.File
@@ -29,12 +32,13 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
+import java.util.*
 import kotlin.io.path.absolutePathString
 
 
 open class DeploymentBuilder(val config: DeploymentBuilderConfig) {
 
-    val logger = logger(this)
+    private val logger = logger(this)
     private val argumentsFilePath = "config/embed/args.txt"
     private val jvmOptsFilePath = "config/embed/jvmopts.txt"
     private val propsFilePath = "config/embed/jvmprops.txt"
@@ -44,6 +48,15 @@ open class DeploymentBuilder(val config: DeploymentBuilderConfig) {
     private val splashFilePath = "config/embed/splash.txt"
     private val moduleFilePath = "config/embed/module.txt"
     private val mainClassFilePath = "config/embed/mainclass.txt"
+
+    val freemarkerConfig  = Configuration(Version(2,3,20))
+
+    init {
+       freemarkerConfig.defaultEncoding = "UTF-8"
+        freemarkerConfig.locale = Locale.ENGLISH
+        freemarkerConfig.templateExceptionHandler = TemplateExceptionHandler.RETHROW_HANDLER
+        freemarkerConfig.setClassForTemplateLoading(DeploymentBuilder::class.java, "/templates")
+    }
 
     @Autowired
     lateinit var resourceMapping: ResourceMapping
@@ -58,10 +71,6 @@ open class DeploymentBuilder(val config: DeploymentBuilderConfig) {
             buildLaunchers()
             val linuxBuilder = LinuxDeploymentBuilder(this)
             linuxBuilder.build()
-//            copyDependencies()
-//            copyResources()
-//            buildJdkImage()
-//            buildLaunchers()
         } catch (ex: Throwable) {
             logger.error("Failed to build deployment", ex)
             return false
@@ -137,7 +146,7 @@ open class DeploymentBuilder(val config: DeploymentBuilderConfig) {
         val pb = ProcessBuilder("make", "all")
         pb.directory(File(launchCodeDir.absolutePathString()))
         val path = System.getenv("PATH")
-        pb.environment().put("PATH", path)
+        pb.environment().put("PATH", "/usr/bin:/usr/local/bin:/usr/local/go/bin:/home/vlada/go/bin:/bin:/sbin")
         pb.environment().put("PWD", launchCodeDir.absolutePathString())
 
         println("PATH: $path")

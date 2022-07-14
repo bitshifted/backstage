@@ -17,6 +17,7 @@ import co.bitshifted.backstage.BackstageConstants.OUTPUT_MODULES_DIR
 import co.bitshifted.backstage.exception.BackstageException
 import co.bitshifted.backstage.exception.ErrorInfo
 import co.bitshifted.backstage.util.logger
+import java.io.FileWriter
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -39,6 +40,7 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
             copyLauncher()
             copyLinuxIcons()
             copySplashScreen()
+            createDesktopEntry()
             logger.info("Successfully created Linux deployment in directory {}", builder.linuxDir)
             return true
         } catch (th: Throwable) {
@@ -81,6 +83,20 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
             builder.config.contentService?.get(splash.sha256 ?: throw BackstageException(ErrorInfo.EMPTY_CONTENT_CHECKSUM)).use {
                 Files.copy(it, target, StandardCopyOption.REPLACE_EXISTING)
             }
+        }
+    }
+
+    private fun createDesktopEntry() {
+        val data = mutableMapOf<String, String>()
+        data["icon"] = builder.config.deployment.applicationInfo.linux.icons[0].target
+        data["exe"] = LAUNCHER_NAME_LINUX
+        data["appName"] = "application"
+        data["comment"] = "Comment"
+        val template = builder.freemarkerConfig.getTemplate("desktop-entry.desktop.ftl")
+        val targetPath = builder.linuxDir.resolve("application.desktop")
+        val writer = FileWriter(targetPath.toFile())
+        writer.use {
+            template.process(data, writer)
         }
     }
 }

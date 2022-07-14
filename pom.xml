@@ -34,6 +34,7 @@
         <commons-codec.version>1.15</commons-codec.version>
         <commons-io.version>2.11.0</commons-io.version>
         <ignite-common.version>0.1.0-SNAPSHOT</ignite-common.version>
+        <freemarker.version>2.3.31</freemarker.version>
     </properties>
 
     <dependencyManagement>
@@ -78,6 +79,12 @@
                 <artifactId>commons-io</artifactId>
                 <version>${commons-io.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.freemarker</groupId>
+                <artifactId>freemarker</artifactId>
+                <version>${freemarker.version}</version>
+            </dependency>
+
 
         </dependencies>
     </dependencyManagement>
@@ -131,7 +138,10 @@
             <groupId>co.bitshifted</groupId>
             <artifactId>ignite-common</artifactId>
         </dependency>
-
+        <dependency>
+            <groupId>org.freemarker</groupId>
+            <artifactId>freemarker</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>mysql</groupId>
