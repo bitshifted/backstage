@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.io.path.absolutePathString
 
 class FileSystemResourceMappingTest {
 
@@ -29,7 +30,9 @@ class FileSystemResourceMappingTest {
         val latest = jdkDir.parent.resolve("latest")
         Files.createSymbolicLink(latest, jdkDir)
 
-        val mapping = FileSystemResourceMapping(jdkRoot.toAbsolutePath().toString())
+        val launchcodeRoot = Files.createTempDirectory("backstage-test-launchcode")
+
+        val mapping = FileSystemResourceMapping(jdkRoot.toAbsolutePath().toString(), launchcodeRoot.absolutePathString())
         val result = mapping.getJdkLocation(JvmVendor.OPENJDK, JavaVersion.JAVA_11)
         Assertions.assertEquals(Path.of(result).toFile().absolutePath, latest.toFile().absolutePath)
         deleteDirectory(jdkRoot.toFile())

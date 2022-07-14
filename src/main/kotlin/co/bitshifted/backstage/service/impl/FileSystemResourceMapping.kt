@@ -23,7 +23,9 @@ import java.nio.file.Path
 import kotlin.io.path.notExists
 
 @Service
-class FileSystemResourceMapping(@Value("\${jdk.root.location}") val jdkRoot : String) : ResourceMapping {
+class FileSystemResourceMapping(
+    @Value("\${jdk.root.location}") val jdkRoot : String,
+    @Value("\${launchcode.source.root}") val launchcodeSourceRoot : String) : ResourceMapping {
 
     val logger = logger(this)
 
@@ -42,5 +44,9 @@ class FileSystemResourceMapping(@Value("\${jdk.root.location}") val jdkRoot : St
             throw DeploymentException("Directory ${target.toFile().absolutePath} does not exist")
         }
         return target.toUri()
+    }
+
+    override fun getLaunchcodeSourceLocation(): URI {
+        return Path.of(launchcodeSourceRoot).toUri()
     }
 }

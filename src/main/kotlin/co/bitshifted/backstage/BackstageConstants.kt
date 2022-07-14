@@ -35,7 +35,12 @@ object BackstageConstants {
     const val OUTPUT_CLASSPATH_DIR = "cp"
     const val OUTPUT_MODULES_DIR = "modules"
     const val OUTPUT_JRE_DIR = "jre"
+    const val OUTPUT_LAUNCHER_DIR = "launchcode"
+    const val OUTPUT_LAUNCHER_DIST_DIR = "dist"
     const val JAR_EXTENSION = ".jar"
     const val JDK_JMODS_DIR_NAME = "jmods"
     const val LATEST_JAVA_DIR_LINK = "latest"
+    const val LAUNCHER_NAME_LINUX = "launchcode-linux"
+    const val LAUNCHER_NAME_MAC = "launchcode-mac"
+    const val LAUNCHER_NAME_WINDOWS = "launchcode-windows.exe"
 }

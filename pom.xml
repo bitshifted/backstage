@@ -32,6 +32,7 @@
         <mockito.version>4.6.0</mockito.version>
         <snakeyaml.version>1.30</snakeyaml.version>
         <commons-codec.version>1.15</commons-codec.version>
+        <commons-io.version>2.11.0</commons-io.version>
         <ignite-common.version>0.1.0-SNAPSHOT</ignite-common.version>
     </properties>
 
@@ -72,6 +73,12 @@
                 <artifactId>ignite-common</artifactId>
                 <version>${ignite-common.version}</version>
             </dependency>
+            <dependency>
+                <groupId>commons-io</groupId>
+                <artifactId>commons-io</artifactId>
+                <version>${commons-io.version}</version>
+            </dependency>
+
         </dependencies>
     </dependencyManagement>
 
@@ -115,6 +122,10 @@
         <dependency>
             <groupId>commons-codec</groupId>
             <artifactId>commons-codec</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
         </dependency>
         <dependency>
             <groupId>co.bitshifted</groupId>

@@ -17,4 +17,6 @@ import java.net.URI
 interface ResourceMapping {
 
     fun getJdkLocation(vendor : JvmVendor, version : JavaVersion, exact : String = "") : URI
+
+    fun getLaunchcodeSourceLocation() : URI
 }

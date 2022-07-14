@@ -13,50 +13,78 @@ package co.bitshifted.backstage.service.deployment.builders
 import co.bitshifted.backstage.BackstageConstants
 import co.bitshifted.backstage.BackstageConstants.JAR_EXTENSION
 import co.bitshifted.backstage.BackstageConstants.OUTPUT_CLASSPATH_DIR
+import co.bitshifted.backstage.BackstageConstants.OUTPUT_LAUNCHER_DIR
 import co.bitshifted.backstage.BackstageConstants.OUTPUT_MODULES_DIR
 import co.bitshifted.backstage.exception.BackstageException
 import co.bitshifted.backstage.exception.DeploymentException
 import co.bitshifted.backstage.exception.ErrorInfo
+import co.bitshifted.backstage.model.OperatingSystem
 import co.bitshifted.backstage.service.ResourceMapping
 import co.bitshifted.backstage.util.logger
+import org.apache.commons.io.FileUtils
 import org.springframework.beans.factory.annotation.Autowired
+import java.io.File
+import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
+import kotlin.io.path.absolutePathString
 
 
-open class DeploymentBuilder(val config : DeploymentBuilderConfig) {
+open class DeploymentBuilder(val config: DeploymentBuilderConfig) {
 
     val logger = logger(this)
-    lateinit var classpathDir : Path
-    lateinit var modulesDir : Path
+    private val argumentsFilePath = "config/embed/args.txt"
+    private val jvmOptsFilePath = "config/embed/jvmopts.txt"
+    private val propsFilePath = "config/embed/jvmprops.txt"
+    private val cpFilePath = "config/embed/classpath.txt"
+    private val modulepathFilePath = "config/embed/modulepath.txt"
+    private val jarFilePath = "config/embed/jar.txt"
+    private val splashFilePath = "config/embed/splash.txt"
+    private val moduleFilePath = "config/embed/module.txt"
+    private val mainClassFilePath = "config/embed/mainclass.txt"
 
-    @Autowired lateinit  var resourceMapping : ResourceMapping
+    @Autowired
+    lateinit var resourceMapping: ResourceMapping
+    lateinit var launchCodeDir: Path
+    lateinit var linuxDir: Path
+    lateinit var windowsDir: Path
+    lateinit var macDir: Path
 
-    fun build() : Boolean {
+    fun build(): Boolean {
         try {
             createDirectoryStructure()
-            copyDependencies()
-            copyResources()
-            buildJdkImage()
-        } catch(ex : Throwable) {
+            buildLaunchers()
+            val linuxBuilder = LinuxDeploymentBuilder(this)
+            linuxBuilder.build()
+//            copyDependencies()
+//            copyResources()
+//            buildJdkImage()
+//            buildLaunchers()
+        } catch (ex: Throwable) {
             logger.error("Failed to build deployment", ex)
             return false
         }
         return true
     }
 
-    protected fun createDirectoryStructure() {
-        classpathDir = Files.createDirectories(Paths.get(config.baseDir.toFile().absolutePath, OUTPUT_CLASSPATH_DIR))
-        logger.info("Created classpath directory at {}", classpathDir.toFile().absolutePath)
-        modulesDir = Files.createDirectories(Paths.get(config.baseDir.toFile().absolutePath, OUTPUT_MODULES_DIR))
-        logger.info("Created modules directory at {}", modulesDir.toFile().absolutePath)
+    fun createDirectoryStructure() {
+        logger.debug("Creating directory structure for deployment in {}", config.baseDir.absolutePathString())
+        launchCodeDir = Files.createDirectories(Paths.get(config.baseDir.absolutePathString(), OUTPUT_LAUNCHER_DIR))
+        logger.debug("Created Launchcode output directory at {}", launchCodeDir.absolutePathString())
+        linuxDir = Files.createDirectories(Paths.get(config.baseDir.absolutePathString(), OperatingSystem.LINUX.title))
+        logger.debug("Created Linux output directory at {}", linuxDir.absolutePathString())
+        windowsDir =
+            Files.createDirectories(Paths.get(config.baseDir.absolutePathString(), OperatingSystem.WINDOWS.title))
+        logger.debug("Created Windows output directory at {}", windowsDir.absolutePathString())
+        macDir = Files.createDirectories(Paths.get(config.baseDir.absolutePathString(), OperatingSystem.MAC_OS_X.title))
+        logger.debug("Created Mac OS X output directory at {}", macDir.absolutePathString())
     }
 
-    protected fun copyDependencies() {
+    fun copyDependencies(modulesDir: Path, classpathDir: Path) {
         config.deployment.jvmConfiguration?.dependencies?.forEach {
-            var targetDIr : Path
+            var targetDIr: Path
             if (it.isModular) {
                 targetDIr = modulesDir
                 logger.debug("Copying dependency {}:{}:{} to {}", it.groupId, it.artifactId, it.version, targetDIr)
@@ -70,9 +98,9 @@ open class DeploymentBuilder(val config : DeploymentBuilderConfig) {
         }
     }
 
-    protected fun copyResources() {
+    fun copyResources(baseDir: Path) {
         config.deployment.resources.forEach {
-            val target = config.baseDir.resolve(it.target)
+            val target = baseDir.resolve(it.target)
             logger.debug("Resource target: {}", target.toFile().absolutePath)
             // create directory structure
             Files.createDirectories(target.parent)
@@ -80,30 +108,74 @@ open class DeploymentBuilder(val config : DeploymentBuilderConfig) {
                 Files.copy(it, target, StandardCopyOption.REPLACE_EXISTING)
             }
         }
-        config.deployment.applicationInfo.linux.icons.forEach{
-            val name = if (it.target != null) it.target else it.source
-            val target = config.baseDir.resolve(name)
-            logger.debug("Icon target: {}", target.toFile().absolutePath)
-            Files.createDirectories(target.parent)
-            config.contentService?.get(it.sha256 ?: throw BackstageException(ErrorInfo.EMPTY_CONTENT_CHECKSUM)).use {
-                Files.copy(it, target, StandardCopyOption.REPLACE_EXISTING)
-            }
-        }
     }
 
-    protected fun buildJdkImage() {
+    fun buildJdkImage(baseDir: Path, modulesDir: Path) {
         logger.info("Building JDK image")
-        val jvmConfig = config.deployment.jvmConfiguration ?: throw DeploymentException("Can not find JVm configuration")
-        val jdkLocation = resourceMapping.getJdkLocation(jvmConfig.vendor, jvmConfig.majorVersion, jvmConfig.fixedVersion ?: "")
+        val jvmConfig =
+            config.deployment.jvmConfiguration ?: throw DeploymentException("Can not find JVm configuration")
+        val jdkLocation =
+            resourceMapping.getJdkLocation(jvmConfig.vendor, jvmConfig.majorVersion, jvmConfig.fixedVersion ?: "")
         val moduleDirs = listOf(Path.of(jdkLocation).resolve(BackstageConstants.JDK_JMODS_DIR_NAME), modulesDir)
-        val jreOutputDir = config.baseDir.resolve(BackstageConstants.OUTPUT_JRE_DIR)
-        val toolRunner = ToolsRunner(config.baseDir)
+        val jreOutputDir = baseDir.resolve(BackstageConstants.OUTPUT_JRE_DIR)
+        val toolRunner = ToolsRunner(baseDir)
         val jdkModules = toolRunner.getJdkModules()
         logger.debug("JDK modules to include: {}", jdkModules)
         if (jdkModules.isEmpty()) {
             throw DeploymentException("Failed to get any JDK module")
         }
         toolRunner.createRuntimeImage(jdkModules, moduleDirs, jreOutputDir)
+    }
+
+    private fun buildLaunchers() {
+        val sourceRoot = resourceMapping.getLaunchcodeSourceLocation()
+        logger.debug("Launchcode source location: {}", sourceRoot.toString())
+        logger.debug("Copying Launchcode source to {}", launchCodeDir.absolutePathString())
+        FileUtils.copyDirectory(File(sourceRoot), launchCodeDir.toFile())
+        logger.debug("Finished copying Launchcode source")
+        setupLauncherConfig()
+        val pb = ProcessBuilder("make", "all")
+        pb.directory(File(launchCodeDir.absolutePathString()))
+        val path = System.getenv("PATH")
+        pb.environment().put("PATH", path)
+        pb.environment().put("PWD", launchCodeDir.absolutePathString())
+
+        println("PATH: $path")
+        val process = pb.start()
+        if (process.waitFor() == 0) {
+            logger.info(process.inputReader().use { it.readText() })
+            logger.info("Launchers created successfully")
+        } else {
+            logger.error("Error encountered while building launchers. Details:")
+            logger.error(process.inputReader().use { it.readText() })
+            logger.error(process.errorReader().use { it.readText() })
+            throw DeploymentException("Failed to build launchers")
+        }
+    }
+
+    private fun setupLauncherConfig() {
+        logger.info("Configuring launcher")
+        val argsPath = launchCodeDir.resolve(argumentsFilePath)
+        Files.writeString(argsPath, config.deployment.jvmConfiguration.arguments ?: "")
+        val jvmOptsPath = launchCodeDir.resolve(jvmOptsFilePath)
+        Files.writeString(jvmOptsPath, config.deployment.jvmConfiguration.jvmOptions ?: "")
+        val propsFile = launchCodeDir.resolve(propsFilePath)
+        Files.writeString(propsFile, config.deployment.jvmConfiguration.systemProperties ?: "")
+        val cpFilePath = launchCodeDir.resolve(cpFilePath)
+        Files.writeString(cpFilePath, OUTPUT_CLASSPATH_DIR)
+        val modulesPathDir = launchCodeDir.resolve(modulepathFilePath)
+        Files.writeString(modulesPathDir, OUTPUT_MODULES_DIR)
+        val jarPath = launchCodeDir.resolve(jarFilePath)
+        Files.writeString(jarPath, config.deployment.jvmConfiguration.jar ?: "")
+        if (config.deployment.applicationInfo.splashScreen != null) {
+            val splashPath = launchCodeDir.resolve(splashFilePath)
+            Files.writeString(splashPath, "-splash:${config.deployment.applicationInfo.splashScreen.target ?: config.deployment.applicationInfo.splashScreen.source}")
+        }
+        val modulePath = launchCodeDir.resolve(moduleFilePath)
+        Files.writeString(modulePath, config.deployment.jvmConfiguration.moduleName ?: "")
+        val mainClassPath = launchCodeDir.resolve(mainClassFilePath)
+        Files.writeString(mainClassPath, config.deployment.jvmConfiguration.mainClass ?: "")
+
     }
 
 }

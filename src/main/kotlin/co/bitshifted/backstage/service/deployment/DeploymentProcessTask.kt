@@ -27,7 +27,6 @@ import co.bitshifted.backstage.util.Downloader
 import co.bitshifted.backstage.util.collectAllDeploymentResources
 import co.bitshifted.backstage.util.logger
 import co.bitshifted.ignite.common.dto.RequiredResourcesDTO
-import co.bitshifted.ignite.common.model.BasicResource
 import co.bitshifted.ignite.common.model.DeploymentStatus.*
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.beans.factory.annotation.Autowired
@@ -106,8 +105,8 @@ class DeploymentProcessTask  (
         logger.info("Starting deployment stage two...")
         setDeploymentStatus(deploymentConfig.deploymentId, STAGE_TWO_IN_PROGRESS)
         processFinalContent()
-        val linuxOutputDir = createDeploymentStructure(OperatingSystem.LINUX)
-        val builder = deploymentBuilderFactory.apply(DeploymentBuilderConfig( linuxOutputDir, deploymentConfig.deployment, contentService))
+        val outputDir = createDeploymentStructure()
+        val builder = deploymentBuilderFactory.apply(DeploymentBuilderConfig( outputDir, deploymentConfig.deployment, contentService))
         val success = builder.build()
         setDeploymentStatus(deploymentConfig.deploymentId, if(success) SUCCESS else FAILED)
     }
@@ -149,8 +148,8 @@ class DeploymentProcessTask  (
         }
     }
 
-    private fun createDeploymentStructure(os : OperatingSystem) : Path {
-        val outputDir = Paths.get(deploymentConfig.contentPath?.toFile()?.absolutePath, DEPLOYMENT_OUTPUT_DIR, os.title)
+    private fun createDeploymentStructure() : Path {
+        val outputDir = Paths.get(deploymentConfig.contentPath?.toFile()?.absolutePath, DEPLOYMENT_OUTPUT_DIR)
         Files.createDirectories(outputDir)
         logger.info("Created output directory {}", outputDir.toFile().absolutePath)
         return outputDir
