@@ -19,11 +19,14 @@ import co.bitshifted.backstage.exception.BackstageException
 import co.bitshifted.backstage.exception.DeploymentException
 import co.bitshifted.backstage.exception.ErrorInfo
 import co.bitshifted.backstage.model.OperatingSystem
+import co.bitshifted.backstage.service.ContentService
 import co.bitshifted.backstage.service.ResourceMapping
 import co.bitshifted.backstage.util.logger
 import freemarker.template.Configuration
 import freemarker.template.TemplateExceptionHandler
 import freemarker.template.Version
+import org.apache.commons.codec.digest.DigestUtils
+import org.apache.commons.codec.digest.MessageDigestAlgorithms
 import org.apache.commons.io.FileUtils
 import org.springframework.beans.factory.annotation.Autowired
 import java.io.File
@@ -50,6 +53,7 @@ open class DeploymentBuilder(val config: DeploymentBuilderConfig) {
     private val mainClassFilePath = "config/embed/mainclass.txt"
 
     val freemarkerConfig  = Configuration(Version(2,3,20))
+    val digester = DigestUtils(MessageDigestAlgorithms.SHA_256)
 
     init {
        freemarkerConfig.defaultEncoding = "UTF-8"
@@ -60,6 +64,8 @@ open class DeploymentBuilder(val config: DeploymentBuilderConfig) {
 
     @Autowired
     lateinit var resourceMapping: ResourceMapping
+    @Autowired
+    lateinit var contentService: ContentService
     lateinit var launchCodeDir: Path
     lateinit var linuxDir: Path
     lateinit var windowsDir: Path
@@ -71,6 +77,7 @@ open class DeploymentBuilder(val config: DeploymentBuilderConfig) {
             buildLaunchers()
             val linuxBuilder = LinuxDeploymentBuilder(this)
             linuxBuilder.build()
+            cacheDeploymentFiles(linuxDir)
         } catch (ex: Throwable) {
             logger.error("Failed to build deployment", ex)
             return false
@@ -78,7 +85,7 @@ open class DeploymentBuilder(val config: DeploymentBuilderConfig) {
         return true
     }
 
-    fun createDirectoryStructure() {
+    private fun createDirectoryStructure() {
         logger.debug("Creating directory structure for deployment in {}", config.baseDir.absolutePathString())
         launchCodeDir = Files.createDirectories(Paths.get(config.baseDir.absolutePathString(), OUTPUT_LAUNCHER_DIR))
         logger.debug("Created Launchcode output directory at {}", launchCodeDir.absolutePathString())
@@ -184,7 +191,23 @@ open class DeploymentBuilder(val config: DeploymentBuilderConfig) {
         Files.writeString(modulePath, config.deployment.jvmConfiguration.moduleName ?: "")
         val mainClassPath = launchCodeDir.resolve(mainClassFilePath)
         Files.writeString(mainClassPath, config.deployment.jvmConfiguration.mainClass ?: "")
+    }
 
+    private fun cacheDeploymentFiles(baseDir : Path) {
+        logger.info("Caching deployment files for directory {}", baseDir.absolutePathString())
+        val fileList = FileUtils.listFiles(baseDir.toFile(), null, true)
+        fileList.stream().forEach {
+            val hash = digester.digestAsHex(it)
+            val size = it.length()
+            logger.debug("Checking if {} exists", it.absolutePath)
+            if(contentService.exists(hash, size)) {
+                logger.debug("File is already cached")
+
+            } else {
+                logger.debug("File {} is not cached, caching it", it.absolutePath)
+                contentService.save(it.inputStream(), it.canExecute())
+            }
+        }
     }
 
 }

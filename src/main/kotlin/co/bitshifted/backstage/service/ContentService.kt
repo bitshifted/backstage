@@ -18,6 +18,8 @@ interface ContentService {
 
     fun save(input : InputStream) : URI
 
+    fun save(input: InputStream, executable : Boolean)
+
     fun get(sha256: String) : InputStream
 
     fun exists(sha256 : String, size : Long) : Boolean

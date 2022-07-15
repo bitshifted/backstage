@@ -58,6 +58,19 @@ class FileSystemContentService(
         return targetFile.toUri()
     }
 
+    override fun save(input: InputStream, executable : Boolean) {
+        val uri = save(input)
+
+        if(executable) {
+            logger.debug("Setting executable flag for {}", uri)
+            val result = Path.of(uri).toFile().setExecutable(true)
+            if(!result) {
+                logger.error("Failed to set executable flag for {}", uri)
+            }
+        }
+
+    }
+
     override fun get(sha256: String): InputStream {
         val level1 = sha256.substring(0, 2)
         val level2 = sha256.substring(2, 4)
