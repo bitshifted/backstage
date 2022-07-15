@@ -26,6 +26,7 @@ import kotlin.io.path.absolutePathString
 
 class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
 
+    val desktopEntryTemplate = "desktop-entry.desktop.ftl"
     val logger = logger(this)
     lateinit var classpathDir : Path
     lateinit var modulesDir : Path
@@ -58,7 +59,7 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
     private fun copyLauncher() {
         val launcherPath = Path.of(builder.launchCodeDir.absolutePathString(), OUTPUT_LAUNCHER_DIST_DIR, LAUNCHER_NAME_LINUX)
         logger.debug("Copying Linux launcher from {} to {}", launcherPath.absolutePathString(), builder.linuxDir.resolve(LAUNCHER_NAME_LINUX))
-        Files.copy(launcherPath, builder.linuxDir.resolve(LAUNCHER_NAME_LINUX), StandardCopyOption.COPY_ATTRIBUTES)
+        Files.copy(launcherPath, builder.linuxDir.resolve(builder.config.deployment.applicationInfo.exeName), StandardCopyOption.COPY_ATTRIBUTES)
     }
 
     private fun copyLinuxIcons() {
@@ -89,11 +90,11 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
     private fun createDesktopEntry() {
         val data = mutableMapOf<String, String>()
         data["icon"] = builder.config.deployment.applicationInfo.linux.icons[0].target
-        data["exe"] = LAUNCHER_NAME_LINUX
-        data["appName"] = "application"
-        data["comment"] = "Comment"
-        val template = builder.freemarkerConfig.getTemplate("desktop-entry.desktop.ftl")
-        val targetPath = builder.linuxDir.resolve("application.desktop")
+        data["exe"] = builder.config.deployment.applicationInfo.exeName
+        data["appName"] = builder.config.deployment.applicationInfo.name
+        data["comment"] = builder.config.deployment.applicationInfo.headline
+        val template = builder.freemarkerConfig.getTemplate(desktopEntryTemplate)
+        val targetPath = builder.linuxDir.resolve("${builder.config.deployment.applicationInfo.exeName}.desktop")
         val writer = FileWriter(targetPath.toFile())
         writer.use {
             template.process(data, writer)

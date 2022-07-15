@@ -45,6 +45,9 @@ fun collectAllDeploymentResources(deployment : DeploymentDTO) : List<BasicResour
     if (deployment.applicationInfo.splashScreen != null) {
         allResources.add(deployment.applicationInfo.splashScreen)
     }
+    if(deployment.applicationInfo.license != null) {
+        allResources.add(deployment.applicationInfo.license)
+    }
 
     allResources.addAll(deployment.applicationInfo.icons ?: emptyList())
     allResources.addAll(deployment.applicationInfo.linux.icons ?: emptyList())

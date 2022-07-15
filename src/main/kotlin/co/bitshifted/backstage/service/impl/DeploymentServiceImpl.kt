@@ -10,6 +10,7 @@
 
 package co.bitshifted.backstage.service.impl
 
+import co.bitshifted.backstage.BackstageConstants
 import co.bitshifted.ignite.common.dto.DeploymentDTO
 import co.bitshifted.ignite.common.dto.DeploymentStatusDTO
 import co.bitshifted.ignite.common.dto.RequiredResourcesDTO
@@ -78,8 +79,12 @@ class DeploymentServiceImpl(
                 entry = it.nextEntry
             }
         }
-        val deploymentFile = tempDir.resolve("deployment.json")
+        val deploymentFile = tempDir.resolve(BackstageConstants.DEPLOYMENT_CONFIG_FILE)
         val deploymentDto = objectMapper.readValue(deploymentFile.toFile(), DeploymentDTO::class.java)
+        val app = applicationRepository.findById(deploymentDto.applicationId).orElseThrow { BackstageException(ErrorInfo.NON_EXISTENT_APPLICATION_ID, deploymentDto.applicationId) }
+        deploymentDto.applicationInfo.name = app.name
+        deploymentDto.applicationInfo.headline = app.headline
+        deploymentDto.applicationInfo.description = app.description
         val taskConfig = DeploymentTaskConfig(deploymentId, DeploymentStage.STAGE_TWO, deploymentDto, tempDir)
         val deploymentProcessTask = deploymentTaskFactory.apply(taskConfig)
         deploymentExecutorService.submit(deploymentProcessTask)
