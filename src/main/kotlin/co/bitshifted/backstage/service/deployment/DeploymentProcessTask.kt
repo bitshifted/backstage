@@ -18,7 +18,6 @@ import co.bitshifted.backstage.exception.ErrorInfo
 import co.bitshifted.backstage.model.DeploymentStage
 import co.bitshifted.ignite.common.model.DeploymentStatus
 import co.bitshifted.backstage.model.DeploymentTaskConfig
-import co.bitshifted.backstage.model.OperatingSystem
 import co.bitshifted.backstage.repository.DeploymentRepository
 import co.bitshifted.backstage.service.ContentService
 import co.bitshifted.backstage.service.deployment.builders.DeploymentBuilder
@@ -67,7 +66,7 @@ class DeploymentProcessTask  (
     private fun runDeploymentStageOne() {
         // download dependencies if not exist
         val requirements = RequiredResourcesDTO()
-        deploymentConfig.deployment.jvmConfiguration?.dependencies?.forEach {
+        deploymentConfig.deployment.jvmConfiguration?.collectAllDependencies()?.forEach {
             val exists = contentService?.exists(it.sha256 ?: "unknown", it.size ?: 0) ?: false
             if (!exists) {
                 logger.debug("Dependency {} does not exist", it.artifactId)

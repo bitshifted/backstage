@@ -17,6 +17,7 @@ import co.bitshifted.backstage.BackstageConstants.OUTPUT_MODULES_DIR
 import co.bitshifted.backstage.exception.BackstageException
 import co.bitshifted.backstage.exception.ErrorInfo
 import co.bitshifted.backstage.util.logger
+import co.bitshifted.ignite.common.model.OperatingSystem
 import java.io.FileWriter
 import java.nio.file.Files
 import java.nio.file.Path
@@ -35,7 +36,7 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
         logger.info("Creating Linux deployment in directory {}", builder.linuxDir)
         try {
             createDirectoryStructure()
-            builder.copyDependencies(modulesDir, classpathDir)
+            builder.copyDependencies(modulesDir, classpathDir, OperatingSystem.LINUX)
             builder.copyResources(builder.linuxDir)
             builder.buildJdkImage(builder.linuxDir, modulesDir)
             copyLauncher()

@@ -18,10 +18,10 @@ import co.bitshifted.backstage.BackstageConstants.OUTPUT_MODULES_DIR
 import co.bitshifted.backstage.exception.BackstageException
 import co.bitshifted.backstage.exception.DeploymentException
 import co.bitshifted.backstage.exception.ErrorInfo
-import co.bitshifted.backstage.model.OperatingSystem
 import co.bitshifted.backstage.service.ContentService
 import co.bitshifted.backstage.service.ResourceMapping
 import co.bitshifted.backstage.util.logger
+import co.bitshifted.ignite.common.model.OperatingSystem
 import freemarker.template.Configuration
 import freemarker.template.TemplateExceptionHandler
 import freemarker.template.Version
@@ -89,17 +89,17 @@ open class DeploymentBuilder(val config: DeploymentBuilderConfig) {
         logger.debug("Creating directory structure for deployment in {}", config.baseDir.absolutePathString())
         launchCodeDir = Files.createDirectories(Paths.get(config.baseDir.absolutePathString(), OUTPUT_LAUNCHER_DIR))
         logger.debug("Created Launchcode output directory at {}", launchCodeDir.absolutePathString())
-        linuxDir = Files.createDirectories(Paths.get(config.baseDir.absolutePathString(), OperatingSystem.LINUX.title))
+        linuxDir = Files.createDirectories(Paths.get(config.baseDir.absolutePathString(), OperatingSystem.LINUX.display))
         logger.debug("Created Linux output directory at {}", linuxDir.absolutePathString())
         windowsDir =
-            Files.createDirectories(Paths.get(config.baseDir.absolutePathString(), OperatingSystem.WINDOWS.title))
+            Files.createDirectories(Paths.get(config.baseDir.absolutePathString(), OperatingSystem.WINDOWS.display))
         logger.debug("Created Windows output directory at {}", windowsDir.absolutePathString())
-        macDir = Files.createDirectories(Paths.get(config.baseDir.absolutePathString(), OperatingSystem.MAC_OS_X.title))
+        macDir = Files.createDirectories(Paths.get(config.baseDir.absolutePathString(), OperatingSystem.MAC.display))
         logger.debug("Created Mac OS X output directory at {}", macDir.absolutePathString())
     }
 
-    fun copyDependencies(modulesDir: Path, classpathDir: Path) {
-        config.deployment.jvmConfiguration?.dependencies?.forEach {
+    fun copyDependencies(modulesDir: Path, classpathDir: Path, os : OperatingSystem) {
+        config.deployment.jvmConfiguration?.collectDependencies(os)?.forEach {
             var targetDIr: Path
             if (it.isModular) {
                 targetDIr = modulesDir
