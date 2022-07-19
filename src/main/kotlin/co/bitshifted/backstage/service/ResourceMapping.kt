@@ -12,11 +12,12 @@ package co.bitshifted.backstage.service
 
 import co.bitshifted.ignite.common.model.JavaVersion
 import co.bitshifted.ignite.common.model.JvmVendor
+import co.bitshifted.ignite.common.model.OperatingSystem
 import java.net.URI
 
 interface ResourceMapping {
 
-    fun getJdkLocation(vendor : JvmVendor, version : JavaVersion, exact : String = "") : URI
+    fun getJdkLocation(vendor : JvmVendor, version : JavaVersion, os : OperatingSystem, exact : String = "") : URI
 
     fun getLaunchcodeSourceLocation() : URI
 }

@@ -13,6 +13,7 @@ package co.bitshifted.backstage.service.impl
 import co.bitshifted.backstage.deleteDirectory
 import co.bitshifted.ignite.common.model.JavaVersion
 import co.bitshifted.ignite.common.model.JvmVendor
+import co.bitshifted.ignite.common.model.OperatingSystem
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import java.nio.file.Files
@@ -25,7 +26,7 @@ class FileSystemResourceMappingTest {
     @Test
     fun testGetJdkLocation() {
         val jdkRoot = Files.createTempDirectory("backstage-test")
-        val jdkDir = Paths.get(jdkRoot.toAbsolutePath().toString(), JvmVendor.OPENJDK.code, JavaVersion.JAVA_11.display, "11.0.2")
+        val jdkDir = Paths.get(jdkRoot.toAbsolutePath().toString(), JvmVendor.OPENJDK.code, JavaVersion.JAVA_11.display, OperatingSystem.LINUX.display, "11.0.2")
         Files.createDirectories(jdkDir)
         val latest = jdkDir.parent.resolve("latest")
         Files.createSymbolicLink(latest, jdkDir)
@@ -33,7 +34,7 @@ class FileSystemResourceMappingTest {
         val launchcodeRoot = Files.createTempDirectory("backstage-test-launchcode")
 
         val mapping = FileSystemResourceMapping(jdkRoot.toAbsolutePath().toString(), launchcodeRoot.absolutePathString())
-        val result = mapping.getJdkLocation(JvmVendor.OPENJDK, JavaVersion.JAVA_11)
+        val result = mapping.getJdkLocation(JvmVendor.OPENJDK, JavaVersion.JAVA_11, OperatingSystem.LINUX)
         Assertions.assertEquals(Path.of(result).toFile().absolutePath, latest.toFile().absolutePath)
         deleteDirectory(jdkRoot.toFile())
     }

@@ -51,6 +51,7 @@ open class DeploymentBuilder(val config: DeploymentBuilderConfig) {
     private val splashFilePath = "config/embed/splash.txt"
     private val moduleFilePath = "config/embed/module.txt"
     private val mainClassFilePath = "config/embed/mainclass.txt"
+    private val winIconPath = "icons/launchcode.ico"
 
     val freemarkerConfig  = Configuration(Version(2,3,20))
     val digester = DigestUtils(MessageDigestAlgorithms.SHA_256)
@@ -78,6 +79,9 @@ open class DeploymentBuilder(val config: DeploymentBuilderConfig) {
             val linuxBuilder = LinuxDeploymentBuilder(this)
             linuxBuilder.build()
             cacheDeploymentFiles(linuxDir)
+            val windowsBuilder = WindowsDeploymentBuilder(this)
+            windowsBuilder.build()
+            cacheDeploymentFiles(windowsDir)
         } catch (ex: Throwable) {
             logger.error("Failed to build deployment", ex)
             return false
@@ -126,12 +130,12 @@ open class DeploymentBuilder(val config: DeploymentBuilderConfig) {
         }
     }
 
-    fun buildJdkImage(baseDir: Path, modulesDir: Path) {
+    fun buildJdkImage(baseDir: Path, modulesDir: Path, os : OperatingSystem) {
         logger.info("Building JDK image")
         val jvmConfig =
             config.deployment.jvmConfiguration ?: throw DeploymentException("Can not find JVm configuration")
         val jdkLocation =
-            resourceMapping.getJdkLocation(jvmConfig.vendor, jvmConfig.majorVersion, jvmConfig.fixedVersion ?: "")
+            resourceMapping.getJdkLocation(jvmConfig.vendor, jvmConfig.majorVersion, os, jvmConfig.fixedVersion ?: "")
         val moduleDirs = listOf(Path.of(jdkLocation).resolve(BackstageConstants.JDK_JMODS_DIR_NAME), modulesDir)
         val jreOutputDir = baseDir.resolve(BackstageConstants.OUTPUT_JRE_DIR)
         val toolRunner = ToolsRunner(baseDir)
@@ -191,6 +195,16 @@ open class DeploymentBuilder(val config: DeploymentBuilderConfig) {
         Files.writeString(modulePath, config.deployment.jvmConfiguration.moduleName ?: "")
         val mainClassPath = launchCodeDir.resolve(mainClassFilePath)
         Files.writeString(mainClassPath, config.deployment.jvmConfiguration.mainClass ?: "")
+        // copy windows icon
+        val winIcons = config.deployment.applicationInfo.windows.icons
+        if (winIcons.size > 0) {
+            val icon = winIcons[0]
+            val iconTarget = launchCodeDir.resolve(winIconPath)
+            logger.debug("Windows icon target: {}", iconTarget.absolutePathString())
+            config.contentService?.get(icon.sha256 ?: throw BackstageException(ErrorInfo.EMPTY_CONTENT_CHECKSUM)).use {
+                Files.copy(it, iconTarget, StandardCopyOption.REPLACE_EXISTING)
+            }
+        }
     }
 
     private fun cacheDeploymentFiles(baseDir : Path) {

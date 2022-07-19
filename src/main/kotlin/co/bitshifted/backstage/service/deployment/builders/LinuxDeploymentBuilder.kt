@@ -38,7 +38,7 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
             createDirectoryStructure()
             builder.copyDependencies(modulesDir, classpathDir, OperatingSystem.LINUX)
             builder.copyResources(builder.linuxDir)
-            builder.buildJdkImage(builder.linuxDir, modulesDir)
+            builder.buildJdkImage(builder.linuxDir, modulesDir, OperatingSystem.LINUX)
             copyLauncher()
             copyLinuxIcons()
             copySplashScreen()
