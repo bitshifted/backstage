@@ -82,6 +82,9 @@ open class DeploymentBuilder(val config: DeploymentBuilderConfig) {
             val windowsBuilder = WindowsDeploymentBuilder(this)
             windowsBuilder.build()
             cacheDeploymentFiles(windowsDir)
+            val macBuilder = MacDeploymentBuilder(this)
+            macBuilder.build()
+            cacheDeploymentFiles(macDir)
         } catch (ex: Throwable) {
             logger.error("Failed to build deployment", ex)
             return false

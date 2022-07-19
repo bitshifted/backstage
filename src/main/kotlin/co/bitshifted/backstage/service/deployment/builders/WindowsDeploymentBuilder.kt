@@ -40,6 +40,7 @@ class WindowsDeploymentBuilder(val builder: DeploymentBuilder) {
             logger.info("Successfully created Windows deployment in directory {}", builder.windowsDir)
             return true
         } catch (th: Throwable) {
+            logger.error("Error building Windows deployment", th)
             throw th
         }
     }

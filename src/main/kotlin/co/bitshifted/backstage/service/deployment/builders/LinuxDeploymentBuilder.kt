@@ -27,7 +27,7 @@ import kotlin.io.path.absolutePathString
 
 class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
 
-    val desktopEntryTemplate = "desktop-entry.desktop.ftl"
+    private val desktopEntryTemplate = "desktop-entry.desktop.ftl"
     val logger = logger(this)
     lateinit var classpathDir : Path
     lateinit var modulesDir : Path
@@ -46,6 +46,7 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
             logger.info("Successfully created Linux deployment in directory {}", builder.linuxDir)
             return true
         } catch (th: Throwable) {
+            logger.error("Error building Linux deployment", th)
             throw th
         }
     }
