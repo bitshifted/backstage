@@ -8,11 +8,13 @@
  *
  */
 
-package co.bitshifted.backstage.mappers
+package co.bitshifted.backstage.model
 
-import org.mapstruct.factory.Mappers
+import javax.xml.bind.annotation.*
 
-fun applicationMapper() : ApplicationMapper = Mappers.getMapper(ApplicationMapper::class.java)
-
-fun deploymentConfigMapper() : DeploymentConfigMapper = Mappers.getMapper(DeploymentConfigMapper::class.java)
-
+@XmlRootElement(name = "release-entry")
+class ReleaseEntry(
+    @get:XmlAttribute var sha256 : String? = null,
+    @get:XmlAttribute var target : String? = null
+) {
+}

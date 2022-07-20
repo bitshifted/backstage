@@ -17,6 +17,8 @@ import co.bitshifted.ignite.common.dto.RequiredResourcesDTO
 import co.bitshifted.backstage.entity.Deployment
 import co.bitshifted.backstage.exception.BackstageException
 import co.bitshifted.backstage.exception.ErrorInfo
+import co.bitshifted.backstage.mappers.deploymentConfigMapper
+import co.bitshifted.backstage.model.DeploymentConfig
 import co.bitshifted.backstage.model.DeploymentStage
 import co.bitshifted.ignite.common.model.DeploymentStatus
 import co.bitshifted.backstage.model.DeploymentTaskConfig
@@ -40,18 +42,19 @@ class DeploymentServiceImpl(
     @Autowired val deploymentRepository: DeploymentRepository,
     @Autowired val applicationRepository: ApplicationRepository,
     @Autowired val deploymentTaskFactory : java.util.function.Function<DeploymentTaskConfig, DeploymentProcessTask>,
-    @Autowired val deploymentExecutorService: DeploymentExecutorService) : DeploymentService {
+    @Autowired val deploymentExecutorService: DeploymentExecutorService,
+    @Autowired val objectMapper: ObjectMapper) : DeploymentService {
 
-    val logger = logger(this)
-    val objectMapper = ObjectMapper()
+    private val logger = logger(this)
 
     override fun submitDeployment(deploymentDto: DeploymentDTO): String? {
         val app = applicationRepository.findById(deploymentDto.applicationId).orElseThrow { BackstageException(ErrorInfo.NON_EXISTENT_APPLICATION_ID, deploymentDto.applicationId) }
         val deployment = Deployment(application = app, status = DeploymentStatus.ACCEPTED)
         val out = deploymentRepository.save(deployment)
         logger.info("Accepted deployment request with id {}", out.id)
-
-        val taskConfig = DeploymentTaskConfig(out.id ?: throw BackstageException(ErrorInfo.DEPLOYMENT_NOT_FOND), DeploymentStage.STAGE_ONE, deploymentDto)
+        val deploymentConfig = deploymentConfigMapper().mapToDeploymentConfig(deploymentDto)
+        deploymentConfig.deploymentId = out.id
+        val taskConfig = DeploymentTaskConfig(deploymentConfig, DeploymentStage.STAGE_ONE)
         val deploymentProcessTask = deploymentTaskFactory.apply(taskConfig)
         deploymentExecutorService.submit(deploymentProcessTask)
         logger.info("Deployment ID {} submitted for processing ", out.id)
@@ -80,12 +83,13 @@ class DeploymentServiceImpl(
             }
         }
         val deploymentFile = tempDir.resolve(BackstageConstants.DEPLOYMENT_CONFIG_FILE)
-        val deploymentDto = objectMapper.readValue(deploymentFile.toFile(), DeploymentDTO::class.java)
-        val app = applicationRepository.findById(deploymentDto.applicationId).orElseThrow { BackstageException(ErrorInfo.NON_EXISTENT_APPLICATION_ID, deploymentDto.applicationId) }
-        deploymentDto.applicationInfo.name = app.name
-        deploymentDto.applicationInfo.headline = app.headline
-        deploymentDto.applicationInfo.description = app.description
-        val taskConfig = DeploymentTaskConfig(deploymentId, DeploymentStage.STAGE_TWO, deploymentDto, tempDir)
+        val deploymentConfig = objectMapper.readValue(deploymentFile.toFile(), DeploymentConfig::class.java)
+        deploymentConfig.deploymentId = deploymentId
+        val app = applicationRepository.findById(deploymentConfig.applicationId).orElseThrow { BackstageException(ErrorInfo.NON_EXISTENT_APPLICATION_ID, deploymentConfig.applicationId) }
+        deploymentConfig.applicationInfo.name = app.name
+        deploymentConfig.applicationInfo.headline = app.headline
+        deploymentConfig.applicationInfo.description = app.description
+        val taskConfig = DeploymentTaskConfig(deploymentConfig, DeploymentStage.STAGE_TWO, tempDir)
         val deploymentProcessTask = deploymentTaskFactory.apply(taskConfig)
         deploymentExecutorService.submit(deploymentProcessTask)
         logger.info("Deployment ID {} submitted for processing ", deploymentId)

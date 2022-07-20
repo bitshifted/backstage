@@ -10,9 +10,14 @@
 
 package co.bitshifted.backstage.mappers
 
-import org.mapstruct.factory.Mappers
+import co.bitshifted.backstage.model.DeploymentConfig
+import co.bitshifted.ignite.common.dto.DeploymentDTO
+import org.mapstruct.Mapper
+import org.mapstruct.Mapping
 
-fun applicationMapper() : ApplicationMapper = Mappers.getMapper(ApplicationMapper::class.java)
+@Mapper
+interface DeploymentConfigMapper {
 
-fun deploymentConfigMapper() : DeploymentConfigMapper = Mappers.getMapper(DeploymentConfigMapper::class.java)
-
+    @Mapping(target = "deploymentId", ignore = true)
+    fun mapToDeploymentConfig(input : DeploymentDTO) : DeploymentConfig
+}

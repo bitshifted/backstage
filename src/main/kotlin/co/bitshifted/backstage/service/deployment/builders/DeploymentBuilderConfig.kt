@@ -10,8 +10,8 @@
 
 package co.bitshifted.backstage.service.deployment.builders
 
-import co.bitshifted.ignite.common.dto.DeploymentDTO
+import co.bitshifted.backstage.model.DeploymentConfig
 import co.bitshifted.backstage.service.ContentService
 import java.nio.file.Path
 
-data class DeploymentBuilderConfig(val baseDir : Path, val deployment : DeploymentDTO, val contentService: ContentService?){}
+data class DeploymentBuilderConfig(val baseDir : Path, val deploymentConfig : DeploymentConfig, val contentService: ContentService?){}

@@ -61,29 +61,29 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
     private fun copyLauncher() {
         val launcherPath = Path.of(builder.launchCodeDir.absolutePathString(), OUTPUT_LAUNCHER_DIST_DIR, LAUNCHER_NAME_LINUX)
         logger.debug("Copying Linux launcher from {} to {}", launcherPath.absolutePathString(), builder.linuxDir.resolve(LAUNCHER_NAME_LINUX))
-        Files.copy(launcherPath, builder.linuxDir.resolve(builder.config.deployment.applicationInfo.exeName), StandardCopyOption.COPY_ATTRIBUTES)
+        Files.copy(launcherPath, builder.linuxDir.resolve(builder.builderConfig.deploymentConfig.applicationInfo.exeName), StandardCopyOption.COPY_ATTRIBUTES)
     }
 
     private fun copyLinuxIcons() {
-        builder.config.deployment.applicationInfo.linux.icons.forEach {
+        builder.builderConfig.deploymentConfig.applicationInfo.linux.icons.forEach {
             val name = if (it.target != null) it.target else it.source
             val target = builder.linuxDir.resolve(name)
             logger.debug("Icon target: {}", target.toFile().absolutePath)
             Files.createDirectories(target.parent)
-            builder.config.contentService?.get(it.sha256 ?: throw BackstageException(ErrorInfo.EMPTY_CONTENT_CHECKSUM)).use {
+            builder.builderConfig.contentService?.get(it.sha256 ?: throw BackstageException(ErrorInfo.EMPTY_CONTENT_CHECKSUM)).use {
                 Files.copy(it, target, StandardCopyOption.REPLACE_EXISTING)
             }
         }
     }
 
     private fun copySplashScreen() {
-        val splash = builder.config.deployment.applicationInfo.splashScreen
+        val splash = builder.builderConfig.deploymentConfig.applicationInfo.splashScreen
         if (splash!= null) {
             val name = if (splash.target != null) splash.target else splash.source
             val target = builder.linuxDir.resolve(name)
             logger.debug("Splash screen target: {}", target.toFile().absolutePath)
             Files.createDirectories(target.parent)
-            builder.config.contentService?.get(splash.sha256 ?: throw BackstageException(ErrorInfo.EMPTY_CONTENT_CHECKSUM)).use {
+            builder.builderConfig.contentService?.get(splash.sha256 ?: throw BackstageException(ErrorInfo.EMPTY_CONTENT_CHECKSUM)).use {
                 Files.copy(it, target, StandardCopyOption.REPLACE_EXISTING)
             }
         }
@@ -91,12 +91,12 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
 
     private fun createDesktopEntry() {
         val data = mutableMapOf<String, String>()
-        data["icon"] = builder.config.deployment.applicationInfo.linux.icons[0].target
-        data["exe"] = builder.config.deployment.applicationInfo.exeName
-        data["appName"] = builder.config.deployment.applicationInfo.name
-        data["comment"] = builder.config.deployment.applicationInfo.headline
+        data["icon"] = builder.builderConfig.deploymentConfig.applicationInfo.linux.icons[0].target
+        data["exe"] = builder.builderConfig.deploymentConfig.applicationInfo.exeName
+        data["appName"] = builder.builderConfig.deploymentConfig.applicationInfo.name
+        data["comment"] = builder.builderConfig.deploymentConfig.applicationInfo.headline
         val template = builder.freemarkerConfig.getTemplate(desktopEntryTemplate)
-        val targetPath = builder.linuxDir.resolve("${builder.config.deployment.applicationInfo.exeName}.desktop")
+        val targetPath = builder.linuxDir.resolve("${builder.builderConfig.deploymentConfig.applicationInfo.exeName}.desktop")
         val writer = FileWriter(targetPath.toFile())
         writer.use {
             template.process(data, writer)

@@ -69,29 +69,29 @@ class MacDeploymentBuilder(val builder: DeploymentBuilder){
             BackstageConstants.LAUNCHER_NAME_MAC
         )
         logger.debug("Copying Mac OS X launcher from {} to {}", launcherPath.absolutePathString(), macOsDir.resolve(BackstageConstants.LAUNCHER_NAME_MAC))
-        Files.copy(launcherPath, macOsDir.resolve(builder.config.deployment.applicationInfo.exeName), StandardCopyOption.COPY_ATTRIBUTES)
+        Files.copy(launcherPath, macOsDir.resolve(builder.builderConfig.deploymentConfig.applicationInfo.exeName), StandardCopyOption.COPY_ATTRIBUTES)
     }
 
     private fun copyMacIcons() {
-        builder.config.deployment.applicationInfo.mac.icons.forEach {
+        builder.builderConfig.deploymentConfig.applicationInfo.mac.icons.forEach {
             val name = if (it.target != null) it.target else it.source
             val target = resourcesDIr.resolve(name)
             logger.debug("Icon target: {}", target.toFile().absolutePath)
             Files.createDirectories(target.parent)
-            builder.config.contentService?.get(it.sha256 ?: throw BackstageException(ErrorInfo.EMPTY_CONTENT_CHECKSUM)).use {
+            builder.builderConfig.contentService?.get(it.sha256 ?: throw BackstageException(ErrorInfo.EMPTY_CONTENT_CHECKSUM)).use {
                 Files.copy(it, target, StandardCopyOption.REPLACE_EXISTING)
             }
         }
     }
 
     private fun copySplashScreen() {
-        val splash = builder.config.deployment.applicationInfo.splashScreen
+        val splash = builder.builderConfig.deploymentConfig.applicationInfo.splashScreen
         if (splash!= null) {
             val name = if (splash.target != null) splash.target else splash.source
             val target = macOsDir.resolve(name)
             logger.debug("Splash screen target: {}", target.toFile().absolutePath)
             Files.createDirectories(target.parent)
-            builder.config.contentService?.get(splash.sha256 ?: throw BackstageException(ErrorInfo.EMPTY_CONTENT_CHECKSUM)).use {
+            builder.builderConfig.contentService?.get(splash.sha256 ?: throw BackstageException(ErrorInfo.EMPTY_CONTENT_CHECKSUM)).use {
                 Files.copy(it, target, StandardCopyOption.REPLACE_EXISTING)
             }
         }
@@ -99,12 +99,12 @@ class MacDeploymentBuilder(val builder: DeploymentBuilder){
 
     private fun createInfoPlist() {
         val data = mutableMapOf<String, String>()
-        data["appName"] = builder.config.deployment.applicationInfo.name
-        data["appExecutable"] = builder.config.deployment.applicationInfo.exeName
-        data["appIcon"] = builder.config.deployment.applicationInfo.mac.icons[0].target
-        data["appId"] = builder.config.deployment.applicationId
-        data["bundleFqdn"] = builder.config.deployment.applicationId
-        data["appVersion"] = builder.config.deployment.version
+        data["appName"] = builder.builderConfig.deploymentConfig.applicationInfo.name
+        data["appExecutable"] = builder.builderConfig.deploymentConfig.applicationInfo.exeName
+        data["appIcon"] = builder.builderConfig.deploymentConfig.applicationInfo.mac.icons[0].target
+        data["appId"] = builder.builderConfig.deploymentConfig.applicationId
+        data["bundleFqdn"] = builder.builderConfig.deploymentConfig.applicationId
+        data["appVersion"] = builder.builderConfig.deploymentConfig.version
 
         val template = builder.freemarkerConfig.getTemplate(infoPlistTemplate)
         val targetPath = macOsDir.parent.resolve("Info.plist")

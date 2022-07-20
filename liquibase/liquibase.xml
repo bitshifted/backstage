@@ -57,4 +57,47 @@
         <modifyDataType columnName="required_data" tableName="deployment" newDataType="clob" />
     </changeSet>
 
+    <changeSet id="release-info" author="vdjurovic" dbms="mysql">
+        <createTable tableName="release">
+            <column name="release_id" type="varchar(16)">
+                <constraints nullable="false" primaryKey="true" />
+            </column>
+            <column name="application_id" type="varchar(16)">
+                <constraints nullable="false" />
+            </column>
+            <column name="deployment_id" type="varchar(16)">
+                <constraints nullable="false" />
+            </column>
+            <column name="release_timestamp" type="varchar(16)">
+                <constraints nullable="false" />
+            </column>
+            <column name="app_version" type="varchar(16)">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+        <addForeignKeyConstraint constraintName="release_app_fkey" baseTableName="release" baseColumnNames="application_id"
+                                 referencedTableName="application" referencedColumnNames="app_id" />
+        <addForeignKeyConstraint constraintName="release_deployment_fkey" baseTableName="release" baseColumnNames="deployment_id"
+                                 referencedTableName="deployment" referencedColumnNames="deployment_id" />
+
+        <createTable tableName="current_release">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints nullable="false" primaryKey="true" />
+            </column>
+            <column name="application_id" type="varchar(16)">
+                <constraints nullable="false" />
+            </column>
+            <column name="release_id" type="varchar(16)">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+        <addForeignKeyConstraint constraintName="current_reease_app_fkey" baseTableName="current_release" baseColumnNames="application_id"
+                                 referencedTableName="application" referencedColumnNames="app_id" />
+        <addForeignKeyConstraint constraintName="current_release_release_fkey" baseTableName="current_release" baseColumnNames="release_id"
+                                 referencedTableName="release" referencedColumnNames="release_id" />
+    </changeSet>
+    <changeSet id="rename-release" author="vdjurovic" dbms="mysql">
+        <renameTable  oldTableName="release" newTableName="app_release" />
+    </changeSet>
+
 </databaseChangeLog>

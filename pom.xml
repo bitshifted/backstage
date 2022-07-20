@@ -35,6 +35,7 @@
         <commons-io.version>2.11.0</commons-io.version>
         <ignite-common.version>0.1.0-SNAPSHOT</ignite-common.version>
         <freemarker.version>2.3.31</freemarker.version>
+        <jackson.version>2.13.3</jackson.version>
     </properties>
 
     <dependencyManagement>
@@ -84,8 +85,16 @@
                 <artifactId>freemarker</artifactId>
                 <version>${freemarker.version}</version>
             </dependency>
-
-
+            <dependency>
+                <groupId>com.fasterxml.jackson.dataformat</groupId>
+                <artifactId>jackson-dataformat-xml</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.module</groupId>
+                <artifactId>jackson-module-kotlin</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -141,6 +150,10 @@
         <dependency>
             <groupId>org.freemarker</groupId>
             <artifactId>freemarker</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.module</groupId>
+            <artifactId>jackson-module-kotlin</artifactId>
         </dependency>
 
         <dependency>

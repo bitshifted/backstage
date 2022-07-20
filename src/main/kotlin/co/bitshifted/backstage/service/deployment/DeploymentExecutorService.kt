@@ -12,6 +12,7 @@ package co.bitshifted.backstage.service.deployment
 
 import co.bitshifted.backstage.BackstageConstants
 import co.bitshifted.backstage.exception.BackstageException
+import co.bitshifted.backstage.exception.DeploymentException
 import co.bitshifted.backstage.exception.ErrorInfo
 import co.bitshifted.ignite.common.model.DeploymentStatus
 import co.bitshifted.backstage.repository.DeploymentRepository
@@ -41,7 +42,7 @@ class DeploymentExecutorService(
         if(taskMap.containsKey(r)) {
             val deploymentId = taskMap[r] ?: "unknown"
             logger.debug("Deployment ID: {}", deploymentId)
-            val curDeployment = deploymentRepository.findById(deploymentId).orElseThrow { BackstageException(ErrorInfo.DEPLOYMENT_NOT_FOND, deploymentId) }
+            val curDeployment = deploymentRepository.findById(deploymentId).orElseThrow { DeploymentException("Unknown deployment ID") }
             val curStatus = curDeployment.status
             logger.debug("Current deployment status: {}", curStatus)
             curDeployment.status = calculateNextStatus(curStatus)
@@ -63,19 +64,13 @@ class DeploymentExecutorService(
                 logger.error("Got exception:", t)
             }
 
-//            if (curDeployment.status.ordinal <= DeploymentStatus.STAGE_TWO_COMPLETED.ordinal ) {
-//                val newStatus = if (t != null) DeploymentStatus.FAILED else DeploymentStatus.SUCCESS
-//                curDeployment.status = newStatus
-//                deploymentRepository.save(curDeployment)
-//                logger.debug("Updated status for deployment ID {} to {}", deploymentId, newStatus)
-//            }
         }
     }
 
     override fun submit(task: Runnable): Future<*> {
         val ftask = super.submit(task)
         if (task is DeploymentProcessTask && ftask is FutureTask) {
-            taskMap[ftask] = task.deploymentConfig.deploymentId
+            taskMap[ftask] = task.taskConfig.deploymentConfig.deploymentId ?: "unknown"
         }
         return ftask
     }

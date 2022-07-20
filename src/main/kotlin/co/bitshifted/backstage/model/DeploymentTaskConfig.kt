@@ -13,6 +13,6 @@ package co.bitshifted.backstage.model
 import co.bitshifted.ignite.common.dto.DeploymentDTO
 import java.nio.file.Path
 
-class DeploymentTaskConfig(val deploymentId : String, val stage : DeploymentStage, val deployment : DeploymentDTO, val contentPath : Path? = null) {
+class DeploymentTaskConfig(val deploymentConfig: DeploymentConfig, val stage : DeploymentStage, val contentPath : Path? = null) {
 
 }

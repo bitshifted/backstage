@@ -69,7 +69,7 @@ class WindowsDeploymentBuilder(val builder: DeploymentBuilder) {
             BackstageConstants.LAUNCHER_NAME_WINDOWS
         )
 
-        var exeName = builder.config.deployment.applicationInfo.exeName
+        var exeName = builder.builderConfig.deploymentConfig.applicationInfo.exeName
         if (!exeName.endsWith(".exe")) {
             exeName = "$exeName.exe"
         }
@@ -86,12 +86,12 @@ class WindowsDeploymentBuilder(val builder: DeploymentBuilder) {
     }
 
     private fun copyWindowsIcons() {
-        builder.config.deployment.applicationInfo.windows.icons.forEach {
+        builder.builderConfig.deploymentConfig.applicationInfo.windows.icons.forEach {
             val name = if (it.target != null) it.target else it.source
             val target = builder.windowsDir.resolve(name)
             logger.debug("Icon target: {}", target.toFile().absolutePath)
             Files.createDirectories(target.parent)
-            builder.config.contentService?.get(it.sha256 ?: throw BackstageException(ErrorInfo.EMPTY_CONTENT_CHECKSUM))
+            builder.builderConfig.contentService?.get(it.sha256 ?: throw BackstageException(ErrorInfo.EMPTY_CONTENT_CHECKSUM))
                 .use {
                     Files.copy(it, target, StandardCopyOption.REPLACE_EXISTING)
                 }
@@ -99,13 +99,13 @@ class WindowsDeploymentBuilder(val builder: DeploymentBuilder) {
     }
 
     private fun copySplashScreen() {
-        val splash = builder.config.deployment.applicationInfo.splashScreen
+        val splash = builder.builderConfig.deploymentConfig.applicationInfo.splashScreen
         if (splash!= null) {
             val name = if (splash.target != null) splash.target else splash.source
             val target = builder.windowsDir.resolve(name)
             logger.debug("Splash screen target: {}", target.toFile().absolutePath)
             Files.createDirectories(target.parent)
-            builder.config.contentService?.get(splash.sha256 ?: throw BackstageException(ErrorInfo.EMPTY_CONTENT_CHECKSUM)).use {
+            builder.builderConfig.contentService?.get(splash.sha256 ?: throw BackstageException(ErrorInfo.EMPTY_CONTENT_CHECKSUM)).use {
                 Files.copy(it, target, StandardCopyOption.REPLACE_EXISTING)
             }
         }

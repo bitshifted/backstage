@@ -8,11 +8,12 @@
  *
  */
 
-package co.bitshifted.backstage.mappers
+package co.bitshifted.backstage.service
 
-import org.mapstruct.factory.Mappers
+import co.bitshifted.backstage.model.DeploymentConfig
+import java.nio.file.Path
 
-fun applicationMapper() : ApplicationMapper = Mappers.getMapper(ApplicationMapper::class.java)
+interface ReleaseService {
 
-fun deploymentConfigMapper() : DeploymentConfigMapper = Mappers.getMapper(DeploymentConfigMapper::class.java)
-
+    fun createRelease(baseDir : Path, deploymentConfig : DeploymentConfig)
+}

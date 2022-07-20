@@ -35,11 +35,14 @@ class FileSystemResourceMapping(
         if (base.notExists()) {
             throw DeploymentException("Directory ${base.toFile().absolutePath} does not exist")
         }
-        val target : Path
-        if (exact != "") {
-            target = base.resolve(exact)
+        var target : Path
+        target = if (exact != "") {
+            base.resolve(exact)
         } else {
-            target = base.resolve(BackstageConstants.LATEST_JAVA_DIR_LINK)
+            base.resolve(BackstageConstants.LATEST_JAVA_DIR_LINK)
+        }
+        if(os == OperatingSystem.MAC) {
+            target = target.resolve("Contents/Home")
         }
         if (target.notExists()) {
             throw DeploymentException("Directory ${target.toFile().absolutePath} does not exist")
