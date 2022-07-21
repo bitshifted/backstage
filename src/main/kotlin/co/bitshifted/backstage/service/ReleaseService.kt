@@ -11,9 +11,13 @@
 package co.bitshifted.backstage.service
 
 import co.bitshifted.backstage.model.DeploymentConfig
+import co.bitshifted.ignite.common.model.OperatingSystem
 import java.nio.file.Path
+import java.util.Optional
 
 interface ReleaseService {
 
     fun createRelease(baseDir : Path, deploymentConfig : DeploymentConfig)
+
+    fun checkForNewRelease(applicationId : String, currentRelease : String, os : OperatingSystem) : Optional<String>
 }

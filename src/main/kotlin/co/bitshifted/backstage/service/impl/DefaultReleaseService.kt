@@ -12,7 +12,9 @@ package co.bitshifted.backstage.service.impl
 
 import co.bitshifted.backstage.entity.ApplicationCurrentRelease
 import co.bitshifted.backstage.entity.ApplicationRelease
+import co.bitshifted.backstage.exception.BackstageException
 import co.bitshifted.backstage.exception.DeploymentException
+import co.bitshifted.backstage.exception.ErrorInfo
 import co.bitshifted.backstage.model.DeploymentConfig
 import co.bitshifted.backstage.model.ReleaseEntry
 import co.bitshifted.backstage.model.ReleaseInfo
@@ -33,6 +35,7 @@ import java.nio.file.Paths
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatterBuilder
+import java.util.*
 import javax.xml.bind.JAXBContext
 import javax.xml.bind.Marshaller
 import kotlin.io.path.absolutePathString
@@ -66,6 +69,18 @@ class DefaultReleaseService(
         currentReleaseRepository.save(currentRelease)
     }
 
+    override fun checkForNewRelease(applicationId: String, currentRelease: String, os : OperatingSystem): Optional<String> {
+        logger.info("Checking new release for application ID {} and current release {}", applicationId, currentRelease)
+        val latestRelease = currentReleaseRepository.findByApplicationId(applicationId).orElseThrow { BackstageException(ErrorInfo.RELEASE_NOT_FOUND, applicationId) }
+        if(currentRelease == latestRelease.releaseId) {
+            return Optional.empty()
+        } else {
+            val releaseInfoFile = Paths.get(releaseStorageLocation, applicationId, latestRelease.releaseId, String.format(releaseInfoFileNamePattern, os.display))
+            val data = Files.readString(releaseInfoFile)
+            return Optional.of(data)
+        }
+    }
+
     private fun createReleaseInfoFile(baseDir: Path, os : OperatingSystem, applicationId : String,  releaseID : String, timestamp : String) {
         logger.info("Creating release info file")
         val osTargetDir = baseDir.resolve(os.display)
@@ -81,7 +96,7 @@ class DefaultReleaseService(
 
         val releaseInfoFile = Paths.get(releaseStorageLocation, applicationId, releaseID, String.format(releaseInfoFileNamePattern, os.display))
         Files.createDirectories(releaseInfoFile.parent)
-        val releaseInfo = ReleaseInfo(releaseID, timestamp, entries)
+        val releaseInfo = ReleaseInfo(applicationId, releaseID, timestamp, entries)
         val ctx = JAXBContext.newInstance(ReleaseInfo::class.java)
         val marshaller = ctx.createMarshaller()
         marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true)

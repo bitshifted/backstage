@@ -19,6 +19,7 @@ import javax.xml.bind.annotation.XmlRootElement
 
 @XmlRootElement(name = "release-info")
 class ReleaseInfo(
+    @get:XmlAttribute(name = "application-id") var applicationId : String? = null,
     @get:XmlAttribute(name = "release-id") var releaseId : String? = null,
     @get:XmlAttribute(name = "timestamp") var timestamp : String? = null,
     @get:XmlElement(name = "entry", type = ReleaseEntry::class) @get:XmlElementWrapper(name = "entries") var entries : List<ReleaseEntry>? = null
