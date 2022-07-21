@@ -56,7 +56,9 @@ class DefaultReleaseService(
         val release = ApplicationRelease(releaseId = null, applicationId = deploymentConfig.applicationId,
             deploymentId = deploymentConfig.deploymentId ?: throw DeploymentException("Deployment ID can not be empty"), releaseTimestamp = timestamp, version = deploymentConfig.version)
         val releaseId = releaseRepository.save(release).releaseId ?: throw DeploymentException("Invalid release ID: null")
-        createReleaseInfoFile(baseDir, OperatingSystem.LINUX, releaseId, timestamp)
+        deploymentConfig.applicationInfo.supportedOperatingSystems.forEach {
+            createReleaseInfoFile(baseDir, it, deploymentConfig.applicationId, releaseId, timestamp)
+        }
         val currentRelease = currentReleaseRepository.findByApplicationId(deploymentConfig.applicationId).orElse(
             ApplicationCurrentRelease(null, deploymentConfig.applicationId, null)
         )
@@ -64,7 +66,7 @@ class DefaultReleaseService(
         currentReleaseRepository.save(currentRelease)
     }
 
-    private fun createReleaseInfoFile(baseDir: Path, os : OperatingSystem, releaseID : String, timestamp : String) {
+    private fun createReleaseInfoFile(baseDir: Path, os : OperatingSystem, applicationId : String,  releaseID : String, timestamp : String) {
         logger.info("Creating release info file")
         val osTargetDir = baseDir.resolve(os.display)
         logger.debug("OS target directory: {}", osTargetDir.absolutePathString())
@@ -74,10 +76,10 @@ class DefaultReleaseService(
             val target = osTargetDir.relativize(it.toPath()).toString()
             logger.debug("Entry target: {}", target)
             val hash = digester.digestAsHex(it)
-            ReleaseEntry(hash, target)
+            ReleaseEntry(hash, target, it.canExecute())
         }
 
-        val releaseInfoFile = Paths.get(releaseStorageLocation, releaseID, String.format(releaseInfoFileNamePattern, os.display))
+        val releaseInfoFile = Paths.get(releaseStorageLocation, applicationId, releaseID, String.format(releaseInfoFileNamePattern, os.display))
         Files.createDirectories(releaseInfoFile.parent)
         val releaseInfo = ReleaseInfo(releaseID, timestamp, entries)
         val ctx = JAXBContext.newInstance(ReleaseInfo::class.java)

@@ -15,6 +15,7 @@ import javax.xml.bind.annotation.*
 @XmlRootElement(name = "release-entry")
 class ReleaseEntry(
     @get:XmlAttribute var sha256 : String? = null,
-    @get:XmlAttribute var target : String? = null
+    @get:XmlAttribute var target : String? = null,
+    @get:XmlAttribute var executable : Boolean? = null
 ) {
 }
