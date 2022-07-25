@@ -43,4 +43,7 @@ object BackstageConstants {
     const val LAUNCHER_NAME_LINUX = "launchcode-linux"
     const val LAUNCHER_NAME_MAC = "launchcode-mac"
     const val LAUNCHER_NAME_WINDOWS = "launchcode-windows.exe"
+
+    const val SYNCRO_JAR_NAME = "syncro.jar"
+    const val SYNCRO_PROPERTIES_FILE = "syncro.properties"
 }

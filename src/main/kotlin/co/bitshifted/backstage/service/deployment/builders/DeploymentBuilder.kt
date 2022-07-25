@@ -15,6 +15,9 @@ import co.bitshifted.backstage.BackstageConstants.JAR_EXTENSION
 import co.bitshifted.backstage.BackstageConstants.OUTPUT_CLASSPATH_DIR
 import co.bitshifted.backstage.BackstageConstants.OUTPUT_LAUNCHER_DIR
 import co.bitshifted.backstage.BackstageConstants.OUTPUT_MODULES_DIR
+import co.bitshifted.backstage.BackstageConstants.SYNCRO_JAR_NAME
+import co.bitshifted.backstage.BackstageConstants.SYNCRO_PROPERTIES_FILE
+import co.bitshifted.backstage.config.SyncroConfig
 import co.bitshifted.backstage.exception.BackstageException
 import co.bitshifted.backstage.exception.DeploymentException
 import co.bitshifted.backstage.exception.ErrorInfo
@@ -22,6 +25,7 @@ import co.bitshifted.backstage.service.ContentService
 import co.bitshifted.backstage.service.ReleaseService
 import co.bitshifted.backstage.service.ResourceMapping
 import co.bitshifted.backstage.util.logger
+import co.bitshifted.ignite.common.dto.JavaDependencyDTO
 import co.bitshifted.ignite.common.model.OperatingSystem
 import freemarker.template.Configuration
 import freemarker.template.TemplateExceptionHandler
@@ -30,13 +34,18 @@ import org.apache.commons.codec.digest.DigestUtils
 import org.apache.commons.codec.digest.MessageDigestAlgorithms
 import org.apache.commons.io.FileUtils
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
 import java.io.File
+import java.io.FileWriter
+import java.net.URI
+import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 import java.util.*
 import kotlin.io.path.absolutePathString
+import kotlin.io.path.inputStream
 
 
 open class DeploymentBuilder(val builderConfig: DeploymentBuilderConfig) {
@@ -52,6 +61,7 @@ open class DeploymentBuilder(val builderConfig: DeploymentBuilderConfig) {
     private val moduleFilePath = "config/embed/module.txt"
     private val mainClassFilePath = "config/embed/mainclass.txt"
     private val winIconPath = "icons/launchcode.ico"
+    private val syncroPropertiesTemplate = "syncro.properties.ftl"
 
     val freemarkerConfig  = Configuration(Version(2,3,20))
     val digester = DigestUtils(MessageDigestAlgorithms.SHA_256)
@@ -69,6 +79,10 @@ open class DeploymentBuilder(val builderConfig: DeploymentBuilderConfig) {
     lateinit var contentService: ContentService
     @Autowired
     lateinit var releaseService : ReleaseService
+    @Value("\${server.url}")
+    lateinit var serverUrl : String
+    @Autowired
+    lateinit var syncroConfig : SyncroConfig
     lateinit var launchCodeDir: Path
     lateinit var linuxDir: Path
     lateinit var windowsDir: Path
@@ -76,7 +90,9 @@ open class DeploymentBuilder(val builderConfig: DeploymentBuilderConfig) {
 
     fun build(): Boolean {
         try {
+            val releaseId = releaseService.initRelease(builderConfig.deploymentConfig)
             createDirectoryStructure()
+            setupSyncroJar(releaseId)
             buildLaunchers()
             val linuxBuilder = LinuxDeploymentBuilder(this)
             linuxBuilder.build()
@@ -87,7 +103,7 @@ open class DeploymentBuilder(val builderConfig: DeploymentBuilderConfig) {
             val macBuilder = MacDeploymentBuilder(this)
             macBuilder.build()
             cacheDeploymentFiles(macDir)
-            releaseService.createRelease(builderConfig.baseDir, builderConfig.deploymentConfig)
+            releaseService.completeRelease(builderConfig.baseDir, builderConfig.deploymentConfig, releaseId)
             logger.info("Deployment created successfully!")
         } catch (ex: Throwable) {
             logger.error("Failed to build deployment", ex)
@@ -107,6 +123,40 @@ open class DeploymentBuilder(val builderConfig: DeploymentBuilderConfig) {
         logger.debug("Created Windows output directory at {}", windowsDir.absolutePathString())
         macDir = Files.createDirectories(Paths.get(builderConfig.baseDir.absolutePathString(), OperatingSystem.MAC.display))
         logger.debug("Created Mac OS X output directory at {}", macDir.absolutePathString())
+    }
+
+    private fun setupSyncroJar(releaseId : String) {
+        val jarLocation = resourceMapping.getSyncroJarLocation()
+        val syncroJar = builderConfig.baseDir.resolve(SYNCRO_JAR_NAME)
+        Files.copy(jarLocation.toURL().openStream(), syncroJar)
+        logger.debug("Created syncro.jar with URI", syncroJar.toUri())
+        // create properties file
+        val data = mutableMapOf<String, String>()
+        data["serverUrl"] = serverUrl
+        data["applicationId"] = builderConfig.deploymentConfig.applicationId
+        data["releaseId"] = releaseId
+        val template = freemarkerConfig.getTemplate(syncroPropertiesTemplate)
+        val propFile = builderConfig.baseDir.resolve(SYNCRO_PROPERTIES_FILE)
+        val writer = FileWriter(propFile.toFile())
+        writer.use {
+            template.process(data, writer)
+        }
+        // update syncro.jar
+        var syncroUri = syncroJar.toUri().toString()
+        if (!syncroUri.toString().startsWith("jar:")) {
+            syncroUri = "jar:${syncroUri.toString()}"
+        }
+        val zipFileSystem = FileSystems.newFileSystem(URI(syncroUri), mapOf("create" to  "true"))
+        zipFileSystem.use {
+            val internalFile = it.getPath("/${SYNCRO_PROPERTIES_FILE}")
+            Files.copy(propFile, internalFile, StandardCopyOption.REPLACE_EXISTING)
+        }
+        logger.info("Successfully updated syncro.jar in path {}", syncroJar)
+        val hash = digester.digestAsHex(syncroJar.toFile())
+        logger.debug("syncro.jar hash: {}", hash)
+        val syncroDep = syncroConfig.toJavaDependency(hash)
+        contentService.save(syncroJar.inputStream())
+        builderConfig.deploymentConfig.jvmConfiguration.dependencies.add(syncroDep)
     }
 
     fun copyDependencies(modulesDir: Path, classpathDir: Path, os : OperatingSystem) {

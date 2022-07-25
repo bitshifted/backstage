@@ -52,20 +52,34 @@ class DefaultReleaseService(
     val digester = DigestUtils(MessageDigestAlgorithms.SHA_256)
     val releaseInfoFileNamePattern = "release-info-%s.xml"
 
-    override fun createRelease(baseDir: Path, deploymentConfig: DeploymentConfig) {
-        logger.info("Creating release for application ID {}", deploymentConfig.applicationId)
+    override fun initRelease(deploymentConfig: DeploymentConfig): String {
+        logger.info(
+            "Initializing release for application ID {} and deployment {}",
+            deploymentConfig.applicationId,
+            deploymentConfig.deploymentId
+        )
         val instant = ZonedDateTime.now(ZoneId.of("UTC"))
         val timestamp = timestampFormatter.format(instant)
-        val release = ApplicationRelease(releaseId = null, applicationId = deploymentConfig.applicationId,
-            deploymentId = deploymentConfig.deploymentId ?: throw DeploymentException("Deployment ID can not be empty"), releaseTimestamp = timestamp, version = deploymentConfig.version)
-        val releaseId = releaseRepository.save(release).releaseId ?: throw DeploymentException("Invalid release ID: null")
+        val release = ApplicationRelease(
+            releaseId = null,
+            applicationId = deploymentConfig.applicationId,
+            deploymentId = deploymentConfig.deploymentId ?: throw DeploymentException("Deployment ID can not be empty"),
+            releaseTimestamp = timestamp,
+            version = deploymentConfig.version
+        )
+        return releaseRepository.save(release).releaseId ?: throw DeploymentException("Invalid release ID: null")
+    }
+
+    override fun completeRelease(baseDir: Path, deploymentConfig: DeploymentConfig, releaseID: String) {
+        logger.info("Creating release for ID", releaseID)
+        val release = releaseRepository.findById(releaseID).orElseThrow { DeploymentException("Could not find release with ID " + releaseID) }
         deploymentConfig.applicationInfo.supportedOperatingSystems.forEach {
-            createReleaseInfoFile(baseDir, it, deploymentConfig.applicationId, releaseId, timestamp)
+            createReleaseInfoFile(baseDir, it, deploymentConfig.applicationId, release.releaseId ?: "unknown", release.releaseTimestamp ?: "unknown")
         }
         val currentRelease = currentReleaseRepository.findByApplicationId(deploymentConfig.applicationId).orElse(
             ApplicationCurrentRelease(null, deploymentConfig.applicationId, null)
         )
-        currentRelease.releaseId = releaseId
+        currentRelease.releaseId = releaseID
         currentReleaseRepository.save(currentRelease)
     }
 

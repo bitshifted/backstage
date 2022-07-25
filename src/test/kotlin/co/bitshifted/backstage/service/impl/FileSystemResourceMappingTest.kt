@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Test
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.nio.file.attribute.FileAttribute
 import kotlin.io.path.absolutePathString
 
 class FileSystemResourceMappingTest {
@@ -32,8 +33,9 @@ class FileSystemResourceMappingTest {
         Files.createSymbolicLink(latest, jdkDir)
 
         val launchcodeRoot = Files.createTempDirectory("backstage-test-launchcode")
+        val syncroJarLocation = Files.createTempFile("backstage-syncro", ".jar")
 
-        val mapping = FileSystemResourceMapping(jdkRoot.toAbsolutePath().toString(), launchcodeRoot.absolutePathString())
+        val mapping = FileSystemResourceMapping(jdkRoot.toAbsolutePath().toString(), launchcodeRoot.absolutePathString(), syncroJarLocation.absolutePathString())
         val result = mapping.getJdkLocation(JvmVendor.OPENJDK, JavaVersion.JAVA_11, OperatingSystem.LINUX)
         Assertions.assertEquals(Path.of(result).toFile().absolutePath, latest.toFile().absolutePath)
         deleteDirectory(jdkRoot.toFile())

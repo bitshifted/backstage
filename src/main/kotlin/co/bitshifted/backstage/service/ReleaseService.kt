@@ -17,7 +17,9 @@ import java.util.Optional
 
 interface ReleaseService {
 
-    fun createRelease(baseDir : Path, deploymentConfig : DeploymentConfig)
+    fun initRelease(deploymentConfig: DeploymentConfig) : String
+
+    fun completeRelease(baseDir : Path, deploymentConfig : DeploymentConfig, releaseId : String)
 
     fun checkForNewRelease(applicationId : String, currentRelease : String, os : OperatingSystem) : Optional<String>
 }

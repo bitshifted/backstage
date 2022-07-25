@@ -26,7 +26,8 @@ import kotlin.io.path.notExists
 @Service
 class FileSystemResourceMapping(
     @Value("\${jdk.root.location}") val jdkRoot : String,
-    @Value("\${launchcode.source.root}") val launchcodeSourceRoot : String) : ResourceMapping {
+    @Value("\${launchcode.source.root}") val launchcodeSourceRoot : String,
+    @Value("\${syncro.jar.location}") val syncroJarLocation : String) : ResourceMapping {
 
     val logger = logger(this)
 
@@ -52,5 +53,9 @@ class FileSystemResourceMapping(
 
     override fun getLaunchcodeSourceLocation(): URI {
         return Path.of(launchcodeSourceRoot).toUri()
+    }
+
+    override fun getSyncroJarLocation(): URI {
+        return Path.of(syncroJarLocation).toUri()
     }
 }
