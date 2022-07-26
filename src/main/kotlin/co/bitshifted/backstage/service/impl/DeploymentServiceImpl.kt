@@ -34,6 +34,7 @@ import org.springframework.stereotype.Service
 import java.io.FileOutputStream
 import java.io.InputStream
 import java.nio.file.Files
+import java.nio.file.Path
 import java.util.zip.ZipInputStream
 
 
@@ -63,8 +64,10 @@ class DeploymentServiceImpl(
 
     override fun submitDeploymentArchive(deploymentId: String, ins: InputStream): String? {
         // unpack deployment archive to temporary directory
-        val tempDir = Files.createTempDirectory("backstage-" + deploymentId)
-        logger.debug("Created temporary directory {}", tempDir.toFile().absolutePath)
+        val deployment = deploymentRepository.findById(deploymentId).orElseThrow { BackstageException(ErrorInfo.DEPLOYMENT_NOT_FOND, deploymentId) }
+        val systemTmpDir = System.getProperty("java.io.tmpdir");
+        val tempDir = Files.createDirectories(Path.of(systemTmpDir,"backstage-" + deployment.application?.id))
+        logger.debug("Created deployment directory {}", tempDir.toFile().absolutePath)
         var buff = ByteArray(4096)
         ZipInputStream(ins).use {
             var entry = it.nextEntry
