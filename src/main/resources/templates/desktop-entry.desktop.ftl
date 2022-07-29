@@ -2,8 +2,8 @@
 Categories=Utility
 Type=Application
 Terminal=false
-Path=~workdir~
-Exec=${exe}
+Path=${r"${INSTALL_PATH}"}
+Exec=${r"${INSTALL_PATH}"}/${exe}
 Name=${appName}
 Comment=${comment}
-Icon=${icon}
+Icon=${r"${INSTALL_PATH}"}/${icon}
