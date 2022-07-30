@@ -9,7 +9,7 @@
 #
 
 #! /bin/bash
-DESKTOP_FILE="%{INSTALL_PATH}/simplejavafx.desktop"
+DESKTOP_FILE="%{INSTALL_PATH}/${appSafeName}.desktop"
 TARGET_LOCAL=~/.local/share/applications
 
 mv "$DESKTOP_FILE" "$TARGET_LOCAL"

@@ -17,6 +17,7 @@ import co.bitshifted.backstage.BackstageConstants.OUTPUT_MODULES_DIR
 import co.bitshifted.backstage.exception.BackstageException
 import co.bitshifted.backstage.exception.ErrorInfo
 import co.bitshifted.backstage.util.logger
+import co.bitshifted.backstage.util.safeAppName
 import co.bitshifted.ignite.common.model.OperatingSystem
 import java.io.FileWriter
 import java.nio.file.Files
@@ -27,7 +28,8 @@ import kotlin.io.path.absolutePathString
 
 class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
 
-    private val desktopEntryTemplate = "desktop-entry.desktop.ftl"
+    private val desktopEntryTemplate = "linux/desktop-entry.desktop.ftl"
+    private val postInstallScriptTemplate = "linux/postinst.sh.ftl"
     val logger = logger(this)
     lateinit var classpathDir : Path
     lateinit var modulesDir : Path
@@ -43,6 +45,7 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
             copyLinuxIcons()
             copySplashScreen()
             createDesktopEntry()
+            createInstaller()
             logger.info("Successfully created Linux deployment in directory {}", builder.linuxDir)
             return true
         } catch (th: Throwable) {
@@ -89,14 +92,32 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
         }
     }
 
-    private fun createDesktopEntry() {
+    private fun getTemplateData() : MutableMap<String, String> {
         val data = mutableMapOf<String, String>()
         data["icon"] = builder.builderConfig.deploymentConfig.applicationInfo.linux.icons[0].target
         data["exe"] = builder.builderConfig.deploymentConfig.applicationInfo.exeName
         data["appName"] = builder.builderConfig.deploymentConfig.applicationInfo.name
         data["comment"] = builder.builderConfig.deploymentConfig.applicationInfo.headline
+        data["appSafeName"] = safeAppName(builder.builderConfig.deploymentConfig.applicationInfo.name)
+        return data
+    }
+
+    private fun createDesktopEntry() {
+        val data = getTemplateData()
         val template = builder.freemarkerConfig.getTemplate(desktopEntryTemplate)
-        val targetPath = builder.linuxDir.resolve("${builder.builderConfig.deploymentConfig.applicationInfo.exeName}.desktop")
+        val safeName = data["appSafeName"]
+        val targetPath = builder.linuxDir.resolve("${safeName}.desktop")
+        val writer = FileWriter(targetPath.toFile())
+        writer.use {
+            template.process(data, writer)
+        }
+    }
+
+    private fun createInstaller() {
+        logger.info("Creating installer in directory {}", builder.builderConfig.baseDir.absolutePathString())
+        val data = getTemplateData()
+        val template = builder.freemarkerConfig.getTemplate(postInstallScriptTemplate)
+        val targetPath = builder.linuxDir.resolve("postinst.sh")
         val writer = FileWriter(targetPath.toFile())
         writer.use {
             template.process(data, writer)

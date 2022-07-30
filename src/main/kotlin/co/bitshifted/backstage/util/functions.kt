@@ -56,3 +56,7 @@ fun collectAllDeploymentResources(deployment : DeploymentConfig) : List<BasicRes
     allResources.addAll(deployment.applicationInfo.windows.icons ?: emptyList())
     return allResources
 }
+
+fun safeAppName(name : String) : String {
+    return name.replace(Regex("\\s"), "-").lowercase()
+}
