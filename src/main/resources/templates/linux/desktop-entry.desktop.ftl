@@ -1,9 +1,9 @@
 [Desktop Entry]
-Categories=Utility
+Categories=${categories}
 Type=Application
 Terminal=false
-Path=${r"${INSTALL_PATH}"}
-Exec=${r"${INSTALL_PATH}"}/${exe}
+Path=__HOME_DIR__/.local/AppForge/${appSafeName}
+Exec=__HOME_DIR__/.local/AppForge/${appSafeName}/${exe}
 Name=${appName}
 Comment=${comment}
-Icon=${r"${INSTALL_PATH}"}/${icon}
+Icon=__HOME_DIR__/.local/AppForge/${appSafeName}/${icon}

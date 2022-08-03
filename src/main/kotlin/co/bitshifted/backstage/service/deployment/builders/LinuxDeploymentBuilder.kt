@@ -16,20 +16,25 @@ import co.bitshifted.backstage.BackstageConstants.OUTPUT_LAUNCHER_DIST_DIR
 import co.bitshifted.backstage.BackstageConstants.OUTPUT_MODULES_DIR
 import co.bitshifted.backstage.exception.BackstageException
 import co.bitshifted.backstage.exception.ErrorInfo
+import co.bitshifted.backstage.util.directoryToTarGz
 import co.bitshifted.backstage.util.logger
 import co.bitshifted.backstage.util.safeAppName
 import co.bitshifted.ignite.common.model.OperatingSystem
+import org.apache.commons.io.FileUtils
 import java.io.FileWriter
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
+import java.util.stream.Collector
+import java.util.stream.Collectors
 import kotlin.io.path.absolutePathString
 
 class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
 
     private val desktopEntryTemplate = "linux/desktop-entry.desktop.ftl"
-    private val postInstallScriptTemplate = "linux/postinst.sh.ftl"
+    private val installerTemplate = "linux/install-script.sh.ftl"
+    private val installerFileName = "installer.sh"
     val logger = logger(this)
     lateinit var classpathDir : Path
     lateinit var modulesDir : Path
@@ -92,13 +97,23 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
         }
     }
 
-    private fun getTemplateData() : MutableMap<String, String> {
-        val data = mutableMapOf<String, String>()
+    private fun getTemplateData() : MutableMap<String, Any> {
+        logger.debug("Linux desktop categories: {}", builder.builderConfig.deploymentConfig.applicationInfo.linux.categories)
+        val data = mutableMapOf<String, Any>()
         data["icon"] = builder.builderConfig.deploymentConfig.applicationInfo.linux.icons[0].target
         data["exe"] = builder.builderConfig.deploymentConfig.applicationInfo.exeName
         data["appName"] = builder.builderConfig.deploymentConfig.applicationInfo.name
         data["comment"] = builder.builderConfig.deploymentConfig.applicationInfo.headline
         data["appSafeName"] = safeAppName(builder.builderConfig.deploymentConfig.applicationInfo.name)
+        data["categories"] = builder.builderConfig.deploymentConfig.applicationInfo.linux.categories.stream().collect(Collectors.joining(";"))
+        logger.debug("template categories: {}", data["categories"])
+        data["version"] = builder.builderConfig.deploymentConfig.version
+        data["appUrl"] = builder.builderConfig.deploymentConfig.applicationInfo.homePageUrl ?: ""
+        data["authors"] = builder.builderConfig.deploymentConfig.applicationInfo.authors
+        // find all executable files
+        val fileList = FileUtils.listFiles(builder.linuxDir.toFile(), null, true)
+        val exeFiles = fileList.filter { it.canExecute() }.map { builder.linuxDir.relativize(it.toPath()).toString() }
+        data["exeFiles"] = exeFiles
         return data
     }
 
@@ -107,6 +122,7 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
         val template = builder.freemarkerConfig.getTemplate(desktopEntryTemplate)
         val safeName = data["appSafeName"]
         val targetPath = builder.linuxDir.resolve("${safeName}.desktop")
+
         val writer = FileWriter(targetPath.toFile())
         writer.use {
             template.process(data, writer)
@@ -116,11 +132,16 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
     private fun createInstaller() {
         logger.info("Creating installer in directory {}", builder.builderConfig.baseDir.absolutePathString())
         val data = getTemplateData()
-        val template = builder.freemarkerConfig.getTemplate(postInstallScriptTemplate)
-        val targetPath = builder.linuxDir.resolve("postinst.sh")
-        val writer = FileWriter(targetPath.toFile())
+        val template = builder.freemarkerConfig.getTemplate(installerTemplate)
+        val installerFile = builder.linuxDir.resolve(installerFileName)
+        val writer = FileWriter(installerFile.toFile())
         writer.use {
             template.process(data, writer)
         }
+        installerFile.toFile().setExecutable(true)
+        val installerName = String.format("%s-%s-linux.tar.gz",  safeAppName(builder.builderConfig.deploymentConfig.applicationInfo.name), builder.builderConfig.deploymentConfig.version)
+        val installerPath = builder.builderConfig.baseDir.resolve(installerName)
+        logger.debug("Linux installer name: {}", installerName)
+        directoryToTarGz(builder.linuxDir, installerPath)
     }
 }

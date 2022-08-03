@@ -9,7 +9,13 @@
 #
 
 #! /bin/bash
-DESKTOP_FILE="%{INSTALL_PATH}/${appSafeName}.desktop"
-TARGET_LOCAL=~/.local/share/applications
 
-mv "$DESKTOP_FILE" "$TARGET_LOCAL"
+BASE_DIR=$HOME/.local
+APP_NAME=${appSafeName}
+TARGET_DIR=$BASE_DIR/AppForge/$APP_NAME
+SHARE_DIR=$BASE_DIR/share/applications
+mkdir -p $TARGET_DIR
+
+cp -rv * $TARGET_DIR
+# process .desktop file
+sed "s|__HOME_DIR__|$HOME|g" $APP_NAME.desktop > $SHARE_DIR/$APP_NAME.desktop

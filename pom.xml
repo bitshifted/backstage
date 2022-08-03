@@ -33,6 +33,7 @@
         <snakeyaml.version>1.30</snakeyaml.version>
         <commons-codec.version>1.15</commons-codec.version>
         <commons-io.version>2.11.0</commons-io.version>
+        <commons-compress.version>1.21</commons-compress.version>
         <ignite-common.version>0.1.0-SNAPSHOT</ignite-common.version>
         <freemarker.version>2.3.31</freemarker.version>
         <jackson.version>2.13.3</jackson.version>
@@ -79,6 +80,11 @@
                 <groupId>commons-io</groupId>
                 <artifactId>commons-io</artifactId>
                 <version>${commons-io.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-compress</artifactId>
+                <version>${commons-compress.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.freemarker</groupId>
@@ -142,6 +148,10 @@
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-compress</artifactId>
         </dependency>
         <dependency>
             <groupId>co.bitshifted</groupId>

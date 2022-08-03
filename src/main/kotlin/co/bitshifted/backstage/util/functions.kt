@@ -13,8 +13,19 @@ package co.bitshifted.backstage.util
 import co.bitshifted.backstage.model.DeploymentConfig
 import co.bitshifted.ignite.common.dto.DeploymentDTO
 import co.bitshifted.ignite.common.model.BasicResource
+import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream
+import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
+import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.io.BufferedOutputStream
+import java.io.File
+import java.io.IOException
+import java.io.OutputStream
+import java.nio.Buffer
+import java.nio.file.FileVisitor
+import java.nio.file.Files
+import java.nio.file.Path
 import javax.servlet.http.HttpServletRequest
 
 inline fun <reified T> logger(from : T) : Logger {
@@ -59,4 +70,21 @@ fun collectAllDeploymentResources(deployment : DeploymentConfig) : List<BasicRes
 
 fun safeAppName(name : String) : String {
     return name.replace(Regex("\\s"), "-").lowercase()
+}
+
+fun directoryToTarGz(sourceDir : Path, target : Path) {
+    if (!Files.isDirectory(sourceDir)) {
+        throw IOException("Please provide a directory.");
+    }
+    val tos = Files.newOutputStream(target)
+    val buffOut = BufferedOutputStream(tos)
+    val gzOut = GzipCompressorOutputStream(buffOut)
+    val tarOs = TarArchiveOutputStream(gzOut)
+    tarOs.use {
+        tarOs.setBigNumberMode(TarArchiveOutputStream.BIGNUMBER_STAR)
+        tarOs.setLongFileMode(TarArchiveOutputStream.LONGFILE_GNU)
+
+        Files.walkFileTree(sourceDir,SimpleFileVisitor(sourceDir, tarOs) )
+        tarOs.finish()
+    }
 }
