@@ -88,6 +88,7 @@ open class DeploymentBuilder(val builderConfig: DeploymentBuilderConfig) {
     lateinit var linuxDir: Path
     lateinit var windowsDir: Path
     lateinit var macDir: Path
+    lateinit var installerDir : Path
 
     fun build(): Boolean {
         try {
@@ -130,6 +131,8 @@ open class DeploymentBuilder(val builderConfig: DeploymentBuilderConfig) {
         logger.debug("Created Windows output directory at {}", windowsDir.absolutePathString())
         macDir = Files.createDirectories(Paths.get(builderConfig.baseDir.absolutePathString(), OperatingSystem.MAC.display))
         logger.debug("Created Mac OS X output directory at {}", macDir.absolutePathString())
+        installerDir = Files.createDirectories(Paths.get(builderConfig.baseDir.absolutePathString(), "installers"))
+        logger.debug("Created installers output directory at {}", installerDir.absolutePathString())
     }
 
     private fun setupSyncroJar(releaseId : String) {
