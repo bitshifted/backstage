@@ -30,6 +30,7 @@ Var StartMenuFolder
 ;Interface Settings
 
 !define MUI_ABORTWARNING
+!define MUI_FINISHPAGE_NOAUTOCLOSE
 ;Start Menu Folder Page Configuration
 !define MUI_STARTMENUPAGE_REGISTRY_ROOT "HKCU"
 !define MUI_STARTMENUPAGE_REGISTRY_KEY "Software\${appName}"
@@ -82,11 +83,16 @@ CreateShortcut "$SMPROGRAMS\$StartMenuFolder\Uninstall.lnk" "$INSTDIR\Uninstall.
 
 SectionEnd
 
+Function .onInit
+SectionSetFlags ${r"${MainSection}"} 17
+FunctionEnd
+
+
 ;--------------------------------
 ;Descriptions
 
 ;Language strings
-LangString DESC_SecDummy ${r"${LANG_ENGLISH}"} "A test section."
+LangString DESC_SecDummy ${r"${LANG_ENGLISH}"} "Main application files (required)."
 
 ;Assign language strings to sections
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
