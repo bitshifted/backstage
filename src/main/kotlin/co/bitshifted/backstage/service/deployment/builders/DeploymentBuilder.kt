@@ -107,12 +107,6 @@ open class DeploymentBuilder(val builderConfig: DeploymentBuilderConfig) {
             cacheDeploymentFiles(macDir)
             releaseService.completeRelease(builderConfig.baseDir, builderConfig.deploymentConfig, releaseId)
             logger.info("Deployment created successfully!")
-            // move/delete output directory
-            val outDir = builderConfig.baseDir.parent
-            logger.debug("out dir: {}", outDir.absolutePathString())
-            val newDir = outDir.parent.resolve(outDir.toFile().name + Instant.now().toEpochMilli())
-            logger.debug("Move to directory {}", newDir.absolutePathString())
-            FileUtils.moveDirectory(outDir.toFile(), newDir.toFile())
         } catch (ex: Throwable) {
             logger.error("Failed to build deployment", ex)
             return false

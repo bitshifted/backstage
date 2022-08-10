@@ -64,9 +64,7 @@ class DeploymentServiceImpl(
 
     override fun submitDeploymentArchive(deploymentId: String, ins: InputStream): String? {
         // unpack deployment archive to temporary directory
-        val deployment = deploymentRepository.findById(deploymentId).orElseThrow { BackstageException(ErrorInfo.DEPLOYMENT_NOT_FOND, deploymentId) }
-        val systemTmpDir = System.getProperty("java.io.tmpdir");
-        val tempDir = Files.createDirectories(Path.of(systemTmpDir,"backstage-" + deployment.application?.id))
+        val tempDir = Files.createTempDirectory("backstage-")
         logger.debug("Created deployment directory {}", tempDir.toFile().absolutePath)
         var buff = ByteArray(4096)
         ZipInputStream(ins).use {
