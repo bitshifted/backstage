@@ -10,6 +10,8 @@
 
 package co.bitshifted.backstage.service.impl
 
+import co.bitshifted.backstage.BackstageConstants
+import co.bitshifted.backstage.dto.AppInstallerDTO
 import co.bitshifted.backstage.entity.ApplicationCurrentRelease
 import co.bitshifted.backstage.entity.ApplicationRelease
 import co.bitshifted.backstage.exception.BackstageException
@@ -20,15 +22,18 @@ import co.bitshifted.backstage.model.ReleaseEntry
 import co.bitshifted.backstage.model.ReleaseInfo
 import co.bitshifted.backstage.repository.ApplicationCurrentReleaseRepository
 import co.bitshifted.backstage.repository.ApplicationReleaseRepository
+import co.bitshifted.backstage.service.ContentService
 import co.bitshifted.backstage.service.ReleaseService
 import co.bitshifted.backstage.util.logger
 import co.bitshifted.ignite.common.model.OperatingSystem
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.apache.commons.codec.digest.DigestUtils
 import org.apache.commons.codec.digest.MessageDigestAlgorithms
 import org.apache.commons.io.FileUtils
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -44,11 +49,18 @@ import kotlin.io.path.absolutePathString
 class DefaultReleaseService(
     @Autowired val releaseRepository : ApplicationReleaseRepository,
     @Autowired val currentReleaseRepository : ApplicationCurrentReleaseRepository,
+    @Autowired val contentService: ContentService,
     @Value("\${release.storage.location}") val releaseStorageLocation : String
 ) : ReleaseService {
 
     private val logger = logger(this)
     private val timestampFormatter = DateTimeFormatterBuilder().appendPattern("YYYYMMddHHmmss").toFormatter()
+    private val installerExtensions = mapOf<OperatingSystem, String>(
+        OperatingSystem.WINDOWS to "exe",
+        OperatingSystem.MAC to "dmg",
+        OperatingSystem.LINUX to "tar.gz"
+    )
+    private val mapper = ObjectMapper()
     val digester = DigestUtils(MessageDigestAlgorithms.SHA_256)
     val releaseInfoFileNamePattern = "release-info-%s.xml"
 
@@ -71,11 +83,12 @@ class DefaultReleaseService(
     }
 
     override fun completeRelease(baseDir: Path, deploymentConfig: DeploymentConfig, releaseID: String) {
-        logger.info("Creating release for ID", releaseID)
+        logger.info("Creating release for ID {}", releaseID)
         val release = releaseRepository.findById(releaseID).orElseThrow { DeploymentException("Could not find release with ID " + releaseID) }
         deploymentConfig.applicationInfo.supportedOperatingSystems.forEach {
             createReleaseInfoFile(baseDir, it, deploymentConfig.applicationId, release.releaseId ?: "unknown", release.releaseTimestamp ?: "unknown")
         }
+        createInstallersFile(baseDir, deploymentConfig.applicationId, release.releaseId ?: "unknown", deploymentConfig.applicationInfo.supportedOperatingSystems)
         val currentRelease = currentReleaseRepository.findByApplicationId(deploymentConfig.applicationId).orElse(
             ApplicationCurrentRelease(null, deploymentConfig.applicationId, null)
         )
@@ -95,15 +108,17 @@ class DefaultReleaseService(
         }
     }
 
+    override fun getInstallersList(applicationId: String): List<AppInstallerDTO> {
+        TODO("Not yet implemented")
+    }
+
     private fun createReleaseInfoFile(baseDir: Path, os : OperatingSystem, applicationId : String,  releaseID : String, timestamp : String) {
         logger.info("Creating release info file")
         val osTargetDir = baseDir.resolve(os.display)
         logger.debug("OS target directory: {}", osTargetDir.absolutePathString())
         val filesList = FileUtils.listFiles(osTargetDir.toFile(), null, true)
         val entries = filesList.map {
-            logger.debug("Current file: {}", it.absolutePath)
             val target = osTargetDir.relativize(it.toPath()).toString()
-            logger.debug("Entry target: {}", target)
             val hash = digester.digestAsHex(it)
             ReleaseEntry(hash, target, it.canExecute())
         }
@@ -116,6 +131,30 @@ class DefaultReleaseService(
         marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true)
         marshaller.marshal(releaseInfo, releaseInfoFile.toFile())
         logger.info("Created release info XML file in {}", releaseInfoFile.absolutePathString())
+    }
+
+    private fun createInstallersFile(baseDir: Path, applicationId: String, releaseId : String, osList : Set<OperatingSystem>) {
+        val installersDir = baseDir.resolve(BackstageConstants.DEPLOYMENT_INSTALLERS_DIR)
+        logger.debug("Installers directory: {}", installersDir.absolutePathString())
+        val installersList = mutableListOf<AppInstallerDTO>()
+
+        osList.forEach {
+            val installerFiles = FileUtils.listFiles(installersDir.toFile(), arrayOf( installerExtensions[it]), false)
+            logger.debug("Installer files: {}", installerFiles)
+           for(file in installerFiles) {
+               installersList.add(getAppInstallerData(applicationId, it, file, installerExtensions[it] ?: ""))
+           }
+        }
+        val installerFile = Paths.get(releaseStorageLocation, applicationId, releaseId, BackstageConstants.OUTPUT_INSTALLERS_FILE).toFile()
+        mapper.writeValue(installerFile, installersList)
+        logger.info("Wrote installers.json file at {}", installerFile.absolutePath)
+    }
+
+    private fun getAppInstallerData(applicationId: String, os: OperatingSystem, installerFile : File, extension : String) : AppInstallerDTO {
+        logger.debug("Calculating hash for installer file {}", installerFile.absolutePath)
+        val installerHash = digester.digestAsHex(installerFile)
+        contentService.save(installerFile.inputStream())
+        return AppInstallerDTO(applicationId, os , extension, installerHash)
     }
 
 }

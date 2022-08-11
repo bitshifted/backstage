@@ -140,7 +140,7 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
         }
         installerFile.toFile().setExecutable(true)
         val installerName = String.format("%s-%s-linux.tar.gz",  safeAppName(builder.builderConfig.deploymentConfig.applicationInfo.name), builder.builderConfig.deploymentConfig.version)
-        val installerPath = builder.builderConfig.baseDir.resolve(installerName)
+        val installerPath = builder.installerDir.resolve(installerName)
         logger.debug("Linux installer name: {}", installerName)
         directoryToTarGz(builder.linuxDir, installerPath)
     }

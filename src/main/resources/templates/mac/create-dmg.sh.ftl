@@ -49,6 +49,9 @@ sudo umount $MOUNT_DIR
 # compress raw DMG image
 dmg $RAW_DMG_NAME $FINAL_DMG_NAME
 
+# cleanup
+rm $RAW_DMG_NAME $DS_STORE_FILE $BACKGROUND_IMAGE
+rm -rvf mount
 
 
 

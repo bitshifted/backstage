@@ -11,6 +11,7 @@
 package co.bitshifted.backstage.service.deployment.builders
 
 import co.bitshifted.backstage.BackstageConstants
+import co.bitshifted.backstage.BackstageConstants.DEPLOYMENT_INSTALLERS_DIR
 import co.bitshifted.backstage.BackstageConstants.JAR_EXTENSION
 import co.bitshifted.backstage.BackstageConstants.OUTPUT_CLASSPATH_DIR
 import co.bitshifted.backstage.BackstageConstants.OUTPUT_LAUNCHER_DIR
@@ -125,7 +126,7 @@ open class DeploymentBuilder(val builderConfig: DeploymentBuilderConfig) {
         logger.debug("Created Windows output directory at {}", windowsDir.absolutePathString())
         macDir = Files.createDirectories(Paths.get(builderConfig.baseDir.absolutePathString(), OperatingSystem.MAC.display))
         logger.debug("Created Mac OS X output directory at {}", macDir.absolutePathString())
-        installerDir = Files.createDirectories(Paths.get(builderConfig.baseDir.absolutePathString(), "installers"))
+        installerDir = Files.createDirectories(Paths.get(builderConfig.baseDir.absolutePathString(), DEPLOYMENT_INSTALLERS_DIR))
         logger.debug("Created installers output directory at {}", installerDir.absolutePathString())
     }
 

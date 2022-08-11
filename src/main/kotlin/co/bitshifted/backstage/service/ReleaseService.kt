@@ -10,6 +10,7 @@
 
 package co.bitshifted.backstage.service
 
+import co.bitshifted.backstage.dto.AppInstallerDTO
 import co.bitshifted.backstage.model.DeploymentConfig
 import co.bitshifted.ignite.common.model.OperatingSystem
 import java.nio.file.Path
@@ -22,4 +23,6 @@ interface ReleaseService {
     fun completeRelease(baseDir : Path, deploymentConfig : DeploymentConfig, releaseId : String)
 
     fun checkForNewRelease(applicationId : String, currentRelease : String, os : OperatingSystem) : Optional<String>
+
+    fun getInstallersList(applicationId: String) : List<AppInstallerDTO>
 }
