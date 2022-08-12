@@ -109,7 +109,16 @@ class DefaultReleaseService(
     }
 
     override fun getInstallersList(applicationId: String): List<AppInstallerDTO> {
-        TODO("Not yet implemented")
+        logger.info("Getting installers list for application ID {}", applicationId)
+        val latestRelease = currentReleaseRepository.findByApplicationId(applicationId).orElseThrow { BackstageException(ErrorInfo.RELEASE_NOT_FOUND, applicationId) }
+        val installersFile = Paths.get(releaseStorageLocation, applicationId, latestRelease.releaseId, BackstageConstants.OUTPUT_INSTALLERS_FILE)
+        val out : List<AppInstallerDTO> = mapper.readValue(installersFile.toFile(), mapper.typeFactory.constructCollectionType(List::class.java, AppInstallerDTO::class.java))
+        return out
+    }
+
+    override fun getInstallerData(applicationId: String, hash: String): AppInstallerDTO {
+        val installersList = getInstallersList(applicationId)
+        return installersList.first { it.fileHash.equals(hash) }
     }
 
     private fun createReleaseInfoFile(baseDir: Path, os : OperatingSystem, applicationId : String,  releaseID : String, timestamp : String) {
@@ -154,7 +163,8 @@ class DefaultReleaseService(
         logger.debug("Calculating hash for installer file {}", installerFile.absolutePath)
         val installerHash = digester.digestAsHex(installerFile)
         contentService.save(installerFile.inputStream())
-        return AppInstallerDTO(applicationId, os , extension, installerHash)
+        return AppInstallerDTO(applicationId = applicationId, operatingSystem =  os , extension =  extension,
+            fileHash =  installerHash, fileName = installerFile.name, size = installerFile.length())
     }
 
 }

@@ -12,7 +12,7 @@
 INSTALLER_DIR=${installerDir}
 MOUNT_DIR=$INSTALLER_DIR/mount
 RAW_DMG_NAME=${appSafeName}-raw.dmg
-FINAL_DMG_NAME=${appSafeName}.dmg
+FINAL_DMG_NAME=${appSafeName}-${appVersion}-mac.dmg
 DMG_SIZE=${sizeInMb}
 VOLUME_NAME="${appName}"
 BACKGROUND_IMAGE=$INSTALLER_DIR/appforge-background.png

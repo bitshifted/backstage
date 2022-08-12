@@ -25,4 +25,6 @@ interface ReleaseService {
     fun checkForNewRelease(applicationId : String, currentRelease : String, os : OperatingSystem) : Optional<String>
 
     fun getInstallersList(applicationId: String) : List<AppInstallerDTO>
+
+    fun getInstallerData(applicationId: String, hash : String) : AppInstallerDTO
 }

@@ -14,8 +14,10 @@ import co.bitshifted.ignite.common.model.OperatingSystem
 
 
 data class AppInstallerDTO(
-    val applicationId : String,
-    val operatingSystem: OperatingSystem,
-    val extension : String,
-    val fileHash : String) {
+    val applicationId : String? = null,
+    val operatingSystem: OperatingSystem? = null,
+    val extension : String? = null,
+    val fileName : String? = null,
+    val fileHash : String? = null,
+    val size : Long = 0) {
 }
