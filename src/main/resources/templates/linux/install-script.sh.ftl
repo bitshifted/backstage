@@ -10,12 +10,13 @@
 
 #! /bin/bash
 
+CONTENT=content
 BASE_DIR=$HOME/.local
 APP_NAME=${appSafeName}
 TARGET_DIR=$BASE_DIR/AppForge/$APP_NAME
 SHARE_DIR=$BASE_DIR/share/applications
 mkdir -p $TARGET_DIR
 
-cp -rv * $TARGET_DIR
+cp -rv $CONTENT/* $TARGET_DIR
 # process .desktop file
-sed "s|__HOME_DIR__|$HOME|g" $APP_NAME.desktop > $SHARE_DIR/$APP_NAME.desktop
+sed "s|__HOME_DIR__|$HOME|g" $CONTENT/$APP_NAME.desktop > $SHARE_DIR/$APP_NAME.desktop

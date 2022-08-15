@@ -35,6 +35,7 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
     private val desktopEntryTemplate = "linux/desktop-entry.desktop.ftl"
     private val installerTemplate = "linux/install-script.sh.ftl"
     private val installerFileName = "installer.sh"
+    private val contentArchiveName = "content.tar.gz"
     val logger = logger(this)
     lateinit var classpathDir : Path
     lateinit var modulesDir : Path
@@ -130,18 +131,28 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
     }
 
     private fun createInstaller() {
-        logger.info("Creating installer in directory {}", builder.builderConfig.baseDir.absolutePathString())
+        logger.info("Creating installer in directory {}", builder.installerDir.absolutePathString())
         val data = getTemplateData()
+        val installerWorkDirName = String.format("linux/%s-%s-linux", data["appSafeName"], data["version"])
+        val workDir = builder.installerDir.resolve(installerWorkDirName)
+        Files.createDirectories(workDir)
+        logger.debug("Linux installer working directory: {}", workDir.absolutePathString())
         val template = builder.freemarkerConfig.getTemplate(installerTemplate)
-        val installerFile = builder.linuxDir.resolve(installerFileName)
+        val installerFile = workDir.resolve(installerFileName)
         val writer = FileWriter(installerFile.toFile())
         writer.use {
             template.process(data, writer)
         }
         installerFile.toFile().setExecutable(true)
-        val installerName = String.format("%s-%s-linux.tar.gz",  safeAppName(builder.builderConfig.deploymentConfig.applicationInfo.name), builder.builderConfig.deploymentConfig.version)
+        // copy content
+        val contentDir = workDir.resolve("content")
+        Files.createDirectories(contentDir)
+        FileUtils.copyDirectory(builder.linuxDir.toFile(), contentDir.toFile())
+        val installerName = String.format("%s-%s-linux.tar.gz",  data["appSafeName"], data["version"])
         val installerPath = builder.installerDir.resolve(installerName)
         logger.debug("Linux installer name: {}", installerName)
-        directoryToTarGz(builder.linuxDir, installerPath)
+        directoryToTarGz(workDir.parent, installerPath)
+        // cleanup
+        FileUtils.deleteDirectory(workDir.toFile())
     }
 }
