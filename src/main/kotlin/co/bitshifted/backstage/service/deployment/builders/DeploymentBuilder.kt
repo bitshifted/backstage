@@ -27,6 +27,7 @@ import co.bitshifted.backstage.service.ReleaseService
 import co.bitshifted.backstage.service.ResourceMapping
 import co.bitshifted.backstage.util.logger
 import co.bitshifted.ignite.common.dto.JavaDependencyDTO
+import co.bitshifted.ignite.common.model.JavaVersion
 import co.bitshifted.ignite.common.model.OperatingSystem
 import freemarker.template.Configuration
 import freemarker.template.TemplateExceptionHandler
@@ -194,19 +195,23 @@ open class DeploymentBuilder(val builderConfig: DeploymentBuilderConfig) {
 
     fun buildJdkImage(baseDir: Path, modulesDir: Path, os : OperatingSystem) {
         logger.info("Building JDK image for {}", os.name)
-        val jvmConfig =
-            builderConfig.deploymentConfig.jvmConfiguration ?: throw DeploymentException("Can not find JVm configuration")
+        val jvmConfig = builderConfig.deploymentConfig.jvmConfiguration
+        val jreOutputDir = baseDir.resolve(BackstageConstants.OUTPUT_JRE_DIR)
         val jdkLocation =
             resourceMapping.getJdkLocation(jvmConfig.vendor, jvmConfig.majorVersion, os, jvmConfig.fixedVersion ?: "")
-        val moduleDirs = listOf(Path.of(jdkLocation).resolve(BackstageConstants.JDK_JMODS_DIR_NAME), modulesDir)
-        val jreOutputDir = baseDir.resolve(BackstageConstants.OUTPUT_JRE_DIR)
-        val toolRunner = ToolsRunner(baseDir)
-        val jdkModules = toolRunner.getJdkModules()
-        logger.debug("JDK modules to include: {}", jdkModules)
-        if (jdkModules.isEmpty()) {
-            throw DeploymentException("Failed to get any JDK module")
+        if(jvmConfig.majorVersion == JavaVersion.JAVA_8) {
+            FileUtils.copyDirectory(Paths.get(jdkLocation).resolve("jre").toFile(), jreOutputDir.toFile())
+        } else {
+            val moduleDirs = listOf(Path.of(jdkLocation).resolve(BackstageConstants.JDK_JMODS_DIR_NAME), modulesDir)
+            val toolRunner = ToolsRunner(baseDir)
+            val jdkModules = toolRunner.getJdkModules()
+            logger.debug("JDK modules to include: {}", jdkModules)
+            if (jdkModules.isEmpty()) {
+                throw DeploymentException("Failed to get any JDK module")
+            }
+            toolRunner.createRuntimeImage(jdkModules, moduleDirs, jreOutputDir)
         }
-        toolRunner.createRuntimeImage(jdkModules, moduleDirs, jreOutputDir)
+
     }
 
     private fun buildLaunchers() {
@@ -244,9 +249,13 @@ open class DeploymentBuilder(val builderConfig: DeploymentBuilderConfig) {
         val propsFile = launchCodeDir.resolve(propsFilePath)
         Files.writeString(propsFile, builderConfig.deploymentConfig.jvmConfiguration.systemProperties ?: "")
         val cpFilePath = launchCodeDir.resolve(cpFilePath)
-        Files.writeString(cpFilePath, OUTPUT_CLASSPATH_DIR)
-        val modulesPathDir = launchCodeDir.resolve(modulepathFilePath)
-        Files.writeString(modulesPathDir, OUTPUT_MODULES_DIR)
+        val cpValue = String.format("%s/*", OUTPUT_CLASSPATH_DIR)
+        Files.writeString(cpFilePath, cpValue)
+        if (builderConfig.deploymentConfig.jvmConfiguration.majorVersion != JavaVersion.JAVA_8) {
+            val modulesPathDir = launchCodeDir.resolve(modulepathFilePath)
+            Files.writeString(modulesPathDir, OUTPUT_MODULES_DIR)
+        }
+
         val jarPath = launchCodeDir.resolve(jarFilePath)
         Files.writeString(jarPath, builderConfig.deploymentConfig.jvmConfiguration.jar ?: "")
         if (builderConfig.deploymentConfig.applicationInfo.splashScreen != null) {
