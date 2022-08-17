@@ -17,6 +17,7 @@ import co.bitshifted.ignite.common.dto.JvmConfigurationDTO
 import co.bitshifted.ignite.common.model.AppAuthor
 import co.bitshifted.ignite.common.model.ApplicationInfo
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito
 import java.io.FileWriter
@@ -26,6 +27,7 @@ import kotlin.io.path.absolutePathString
 class DeploymentBuilderTest {
 
     @Test
+    @Disabled("izpack not used any more")
     fun testValidInstallerTemplate() {
         val tmpDir = Files.createTempDirectory("template-test")
         val mockContentService = Mockito.mock(ContentService::class.java)

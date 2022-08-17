@@ -110,7 +110,7 @@ class LinuxDeploymentBuilder(val builder : DeploymentBuilder) {
         logger.debug("template categories: {}", data["categories"])
         data["version"] = builder.builderConfig.deploymentConfig.version
         data["appUrl"] = builder.builderConfig.deploymentConfig.applicationInfo.homePageUrl ?: ""
-        data["authors"] = builder.builderConfig.deploymentConfig.applicationInfo.authors
+        data["publisher"] = builder.builderConfig.deploymentConfig.applicationInfo.publisher
         // find all executable files
         val fileList = FileUtils.listFiles(builder.linuxDir.toFile(), null, true)
         val exeFiles = fileList.filter { it.canExecute() }.map { builder.linuxDir.relativize(it.toPath()).toString() }

@@ -10,7 +10,7 @@
 
 package co.bitshifted.backstage.mappers
 
-import co.bitshifted.backstage.dto.ApplicationDTO
+import co.bitshifted.ignite.common.dto.ApplicationDTO
 import co.bitshifted.backstage.entity.Application
 import org.mapstruct.Mapper
 import org.mapstruct.factory.Mappers

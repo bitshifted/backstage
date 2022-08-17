@@ -100,4 +100,12 @@
         <renameTable  oldTableName="release" newTableName="app_release" />
     </changeSet>
 
+    <changeSet id="addiitona-app-info" author="vdjurovic" dbms="mysql">
+        <addColumn tableName="application">
+            <column name="home_page_url" type="varchar(512)" />
+            <column name="publisher" type="varchar(512)" />
+            <column name="publisher_email" type="varchar(128)" />
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>

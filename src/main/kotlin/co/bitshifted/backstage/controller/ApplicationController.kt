@@ -10,11 +10,10 @@
 
 package co.bitshifted.backstage.controller
 
-import co.bitshifted.backstage.dto.ApplicationDTO
+import co.bitshifted.ignite.common.dto.ApplicationDTO
 import co.bitshifted.backstage.mappers.applicationMapper
 import co.bitshifted.backstage.service.ApplicationService
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable

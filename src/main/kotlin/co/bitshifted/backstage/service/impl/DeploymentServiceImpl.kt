@@ -90,6 +90,9 @@ class DeploymentServiceImpl(
         deploymentConfig.applicationInfo.name = app.name
         deploymentConfig.applicationInfo.headline = app.headline
         deploymentConfig.applicationInfo.description = app.description
+        deploymentConfig.applicationInfo.homePageUrl = app.homePageUrl
+        deploymentConfig.applicationInfo.publisher = app.publisher
+        deploymentConfig.applicationInfo.publisherEmail = app.publisherEmail
         val taskConfig = DeploymentTaskConfig(deploymentConfig, DeploymentStage.STAGE_TWO, tempDir)
         val deploymentProcessTask = deploymentTaskFactory.apply(taskConfig)
         deploymentExecutorService.submit(deploymentProcessTask)
