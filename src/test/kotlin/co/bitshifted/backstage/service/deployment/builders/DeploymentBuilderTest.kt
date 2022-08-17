@@ -14,7 +14,6 @@ import co.bitshifted.backstage.model.DeploymentConfig
 import co.bitshifted.backstage.service.ContentService
 import co.bitshifted.backstage.util.safeAppName
 import co.bitshifted.ignite.common.dto.JvmConfigurationDTO
-import co.bitshifted.ignite.common.model.AppAuthor
 import co.bitshifted.ignite.common.model.ApplicationInfo
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Disabled
@@ -47,11 +46,6 @@ class DeploymentBuilderTest {
         data["version"] = config.deploymentConfig.version
         data["exeFiles"] = listOf("path/1", "/some/path2")
         data["appUrl"] = "https:///www.example.com"
-        val author = AppAuthor()
-        author.name = "john doe"
-        author.email = "johndoe@mail.com"
-        author.website = "http://example.com"
-        data["authors"] = listOf(author)
         val builder = DeploymentBuilder(config)
         val template = builder.freemarkerConfig.getTemplate("linux/izpack-install.xml.ftl")
         val target = tmpDir.resolve("install-test.xml")
