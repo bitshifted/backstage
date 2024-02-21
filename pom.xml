@@ -34,7 +34,7 @@
         <mockito.version>4.6.0</mockito.version>
         <commons-codec.version>1.15</commons-codec.version>
         <commons-io.version>2.11.0</commons-io.version>
-        <commons-compress.version>1.21</commons-compress.version>
+        <commons-compress.version>1.26.0</commons-compress.version>
         <appforge-common.version>1.1.0</appforge-common.version>
         <jackson.version>2.13.3</jackson.version>
         <uuid-creator.version>5.2.0</uuid-creator.version>
